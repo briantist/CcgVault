@@ -27,3 +27,6 @@ jobs:
 
       - name: Build Solution
         run: msbuild.exe ${{ env.SOLUTION }} /p:platform="Any CPU" /p:configuration="Release"
+
+      - name: Run!
+        run: src\CcgVault\bin\Release\CcgVault.exe --help
