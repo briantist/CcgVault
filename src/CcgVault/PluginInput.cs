@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +10,7 @@ namespace CcgVault
     {
         private string[] _parsed;
         private ArraySegment<string> _arguments;
-        
+
         public PluginInput(string input)
         {
             _parsed = input.Split('|');

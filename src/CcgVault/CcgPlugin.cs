@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.EnterpriseServices;
 using System.Linq;
@@ -11,7 +11,6 @@ using VaultSharp.V1.AuthMethods.Token;
 namespace CcgVault
 {
     // See: https://docs.microsoft.com/en-us/windows/win32/api/ccgplugins/nf-ccgplugins-iccgdomainauthcredentials-getpasswordcredentials
-    //[Guid("0EC314ED-C874-4856-AE79-D73278FC507A")]
     [Guid("6ECDA518-2010-4437-8BC3-46E752B7B172")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     [ComImport]

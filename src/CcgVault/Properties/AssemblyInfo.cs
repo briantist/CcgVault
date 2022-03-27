@@ -1,4 +1,4 @@
-﻿using System.EnterpriseServices;
+using System.EnterpriseServices;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -45,7 +45,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: InternalsVisibleTo(
-    "Test, PublicKey=" + 
+    "Test, PublicKey=" +
         "0024000004800000940000000602000000240000525341310004000001000100adfa0f7741d088" +
         "7fb2527dc1eefa61008d1587bb0a4b5be8dcf11f86464fa6c57d3ae26eadd266e73d494eb4c46e" +
         "ff1b21ce79afc473dc2dd61644ed7b11802eec4e76bb11c37864f9bf6e67cf4e3298a2e41f806f" +

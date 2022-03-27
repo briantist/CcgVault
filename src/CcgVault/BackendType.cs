@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +23,7 @@ namespace CcgVault
 
     abstract class BackendTypeConfig : IDictionary<string, object>
     {
-        protected readonly Dictionary<string, object> _data; 
+        protected readonly Dictionary<string, object> _data;
 
         public BackendTypeConfig(IDictionary<string, object> data)
         {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,7 +21,6 @@ namespace CcgVault
         {
             public Uri VaultAddr { get; set; }
             public _Auth Auth { get; set; }
-            
         }
 
         public class _Auth
@@ -107,7 +106,7 @@ namespace CcgVault
             }
         }
 
-        
+
         public Config(PluginInput input)
         {
             _input = input;
@@ -119,7 +118,7 @@ namespace CcgVault
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .WithObjectFactory(new ConfigFactory(input))
                 .WithNodeTypeResolver(
-                    new ExpandoNodeTypeResolver(), 
+                    new ExpandoNodeTypeResolver(),
                     where: lss => lss.InsteadOf<DefaultContainersNodeTypeResolver>())
                 .Build();
 

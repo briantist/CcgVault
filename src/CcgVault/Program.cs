@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace CcgVault
             {
                 using (CcgPlugin ccg = new CcgPlugin())
                 {
-                    string domain, user, pass; 
+                    string domain, user, pass;
                     ccg.GetPasswordCredentials(Input, out domain, out user, out pass);
 
                     Console.WriteLine($"Domain: {domain}\nUser: {user}\nPass: {pass}");
@@ -71,7 +71,7 @@ namespace CcgVault
 
                     result = p.Parse(arguments);
                     command = p.Object;
-                    
+
                     break;
 
                 case "help":
