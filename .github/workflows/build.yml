@@ -100,9 +100,9 @@ jobs:
         shell: pwsh
         run: |
           $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
-          $msi
+          Write-Host ($msi | fl * | out-string)
 
-          & msiexec.exe /I $msi.FullName /QN /L*V! "${{ runner.temp }}\output.log"
+          & msiexec.exe /I $msi.FullName /QN /L*vx! "${{ runner.temp }}\output.log"
 
       - name: Show installer output
         if: always()
