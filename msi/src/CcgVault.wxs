@@ -6,12 +6,15 @@
 
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFiles64Folder">
-                <Directory Id="APPLICATIONROOTDIRECTORY" Name="CcgVault"/>
+                <Directory Id="APPLICATIONROOTDIRECTORY" Name="CcgVault">
+                    <!-- <Directory Id="GAC" Name="GAC" /> -->
+                </Directory>
             </Directory>
         </Directory>
 
         <Feature Id="MainApplication" Title="CcgVault Plugin" Level="1">
             <ComponentGroupRef Id="CoGr" />
+            <!-- <ComponentGroupRef Id="CoGAC" /> -->
             <ComponentGroupRef Id="CoComPlus" />
         </Feature>
 
