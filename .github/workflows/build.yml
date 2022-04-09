@@ -72,11 +72,11 @@ jobs:
         working-directory: msi
         # Inspired by https://serverfault.com/a/1007421/236470
         run: |
-          $msi = Get-ChildItem -Path msi\*.msi -File | Select-Object -First 1
+          $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
 
           $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
               '/I'
-              $msi
+              $msi.FullName
               '/S'
               '/V'
               '/QN'
