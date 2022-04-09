@@ -12,6 +12,11 @@
 
         <Feature Id="MainApplication" Title="CcgVault Plugin" Level="1">
             <ComponentGroupRef Id="CoGr" />
+            <ComponentGroupRef Id="CoComPlus" />
         </Feature>
+
+        <InstallExecuteSequence>
+            <Custom Action="ImplicitRegister" After="RegisterComPlus" />
+        </InstallExecuteSequence>
     </Product>
 </Wix>
