@@ -65,7 +65,7 @@ jobs:
         working-directory: release
         run: CcgVault.exe --help
 
-      - mame: Install from MSI
+      - name: Install from MSI
         shell: pwsh
         working-directory: msi
         # Inspired by https://serverfault.com/a/1007421/236470
@@ -91,4 +91,5 @@ jobs:
           exit $main_process.ExitCode
 
       - name: Run from install
-        run: "%ProgramFiles%\CcgVault\CcgVault.exe" --help
+        run: |
+          "%ProgramFiles%\CcgVault\CcgVault.exe" --help
