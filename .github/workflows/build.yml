@@ -71,43 +71,41 @@ jobs:
         working-directory: release
         run: CcgVault.exe --help
 
-      # - name: Install from MSI
-      #   shell: pwsh
-      #   working-directory: msi
-      #   # Inspired by https://serverfault.com/a/1007421/236470
-      #   run: |
-      #     $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
-
-      #     $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
-      #         '/I'
-      #         $msi.FullName
-      #         '/S'
-      #         '/V'
-      #         '/QN'
-      #         '/L*V!'
-      #         '${{ runner.temp }}\output.log'
-      #     ) -NoNewWindow -PassThru
-
-      #     $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
-      #         "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
-      #     ) -NoNewWindow -PassThru
-
-      #     $main_process.WaitForExit()
-      #     $log_process.Kill()
-      #     exit $main_process.ExitCode
-
       - name: Install from MSI
-        working-directory: msi
         shell: pwsh
+        working-directory: msi
+        # Inspired by https://serverfault.com/a/1007421/236470
         run: |
           $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
-          Write-Host ($msi | fl * | out-string)
 
-          & msiexec.exe /I $msi.FullName /QN /L*vx! "${{ runner.temp }}\output.log"
+          $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
+              '/I'
+              $msi.FullName
+              '/QN'
+              '/L*v!'
+              '${{ runner.temp }}\output.log'
+          ) -NoNewWindow -PassThru
 
-      - name: Show installer output
-        if: always()
-        run: type "${{ runner.temp }}\output.log" || exit 0
+          $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
+              "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
+          ) -NoNewWindow -PassThru
+
+          $main_process.WaitForExit()
+          $log_process.Kill()
+          exit $main_process.ExitCode
+
+      # - name: Install from MSI
+      #   working-directory: msi
+      #   shell: pwsh
+      #   run: |
+      #     $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
+      #     Write-Host ($msi | fl * | out-string)
+
+      #     & msiexec.exe /I $msi.FullName /QN /L*vx! "${{ runner.temp }}\output.log"
+
+      # - name: Show installer output
+      #   if: always()
+      #   run: type "${{ runner.temp }}\output.log" || exit 0
 
       - name: Run from install
         run: |
