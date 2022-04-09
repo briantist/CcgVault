@@ -105,7 +105,7 @@ jobs:
 
       - name: Show installer output
         if: always()
-        run: type "${{ runner.temp }}\output.log"
+        run: type "${{ runner.temp }}\output.log" || exit 0
 
       - name: Run from install
         run: |
