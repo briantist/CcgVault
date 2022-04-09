@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*" UpgradeCode="9b5ec46d-a285-45a3-91d6-24a4af94ddd0" Version="$(var.CcgVaultVer)" Language="1033" Name="CcgVault" Manufacturer="CcgVault">
-        <Package InstallerVersion="300" Compressed="yes" Description="!(bind.property.ProductName) !(bind.property.ProductVersion)" Platform="x64"/>
+        <Package InstallerVersion="300" Compressed="yes" Description="!(bind.property.ProductName) !(bind.property.ProductVersion)" Platform="x64" />
         <Media Id="1" Cabinet="CcgVault.cab" EmbedCab="yes" />
 
         <Directory Id="TARGETDIR" Name="SourceDir">
