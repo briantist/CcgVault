@@ -19,7 +19,7 @@ defaults:
 jobs:
   build:
     name: build
-    runs-on: windows-2022
+    runs-on: windows-2019
     steps:
       - uses: actions/checkout@v3
 
@@ -40,12 +40,16 @@ jobs:
       - name: Upload release artifact
         uses: actions/upload-artifact@v3
         with:
+          if-no-files-found: error
+          retention-days: 1
           name: release
           path: ${{ env.RELEASE }}
 
       - name: Upload MSI artifact
         uses: actions/upload-artifact@v3
         with:
+          if-no-files-found: error
+          retention-days: 1
           name: msi
           path: msi/out/*.msi
 
@@ -67,30 +71,41 @@ jobs:
         working-directory: release
         run: CcgVault.exe --help
 
+      # - name: Install from MSI
+      #   shell: pwsh
+      #   working-directory: msi
+      #   # Inspired by https://serverfault.com/a/1007421/236470
+      #   run: |
+      #     $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
+
+      #     $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
+      #         '/I'
+      #         $msi.FullName
+      #         '/S'
+      #         '/V'
+      #         '/QN'
+      #         '/L*V!'
+      #         '${{ runner.temp }}\output.log'
+      #     ) -NoNewWindow -PassThru
+
+      #     $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
+      #         "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
+      #     ) -NoNewWindow -PassThru
+
+      #     $main_process.WaitForExit()
+      #     $log_process.Kill()
+      #     exit $main_process.ExitCode
+
       - name: Install from MSI
         shell: pwsh
-        working-directory: msi
-        # Inspired by https://serverfault.com/a/1007421/236470
         run: |
           $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
 
-          $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
-              '/I'
-              $msi.FullName
-              '/S'
-              '/V'
-              '/QN'
-              '/L*V!'
-              '${{ runner.temp }}\output.log'
-          ) -NoNewWindow -PassThru
+          & msiexec.exe /I $msi.FullName /S /V /QN /L*V! "${{ runner.temp }}\output.log"
 
-          $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
-              "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
-          ) -NoNewWindow -PassThru
-
-          $main_process.WaitForExit()
-          $log_process.Kill()
-          exit $main_process.ExitCode
+      - name: Show installer output
+        if: always()
+        run: type "${{ runner.temp }}\output.log"
 
       - name: Run from install
         run: |
