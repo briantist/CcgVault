@@ -87,6 +87,7 @@ jobs:
           ) -NoNewWindow -PassThru
 
           $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
+              '-c'
               "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
           ) -NoNewWindow -PassThru
 
