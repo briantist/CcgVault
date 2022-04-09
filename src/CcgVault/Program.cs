@@ -43,6 +43,29 @@ namespace CcgVault
             }
         }
 
+        class CliCommandPing : ICliCommand
+        {
+            public void Help(string text)
+            {
+                Console.WriteLine("ccgvault.exe ping");
+                Console.WriteLine();
+                Console.WriteLine("Runs a simple method against the COM+ service, implicitly registering it in the process.");
+                Console.WriteLine();
+                Console.WriteLine("The following options are accepted:");
+                Console.WriteLine(text);
+                Exit(-1);
+            }
+
+            public void Invoke()
+            {
+                using (var ccg = new CcgPlugin())
+                {
+                    Console.WriteLine("Expecting response: 'Pong'");
+                    Console.WriteLine($"Got response: '{ccg.Ping()}'");
+                }
+            }
+        }
+
         public static void Main(string[] args)
         {
             string cmd = "";
@@ -60,17 +83,28 @@ namespace CcgVault
             switch (cmd)
             {
                 case "test":
-                    var p = new FluentCommandLineParser<CliCommandTest>();
+                    var _test = new FluentCommandLineParser<CliCommandTest>();
 
-                    p.SetupHelp("?", "help")
-                     .Callback(text => p.Object.Help(text));
+                    _test.SetupHelp("?", "help")
+                        .Callback(text => _test.Object.Help(text));
 
-                    p.Setup(arg => arg.Input)
-                     .As('i', "input")
-                     .Required();
+                    _test.Setup(arg => arg.Input)
+                        .As('i', "input")
+                        .Required();
 
-                    result = p.Parse(arguments);
-                    command = p.Object;
+                    result = _test.Parse(arguments);
+                    command = _test.Object;
+
+                    break;
+
+                case "ping":
+                    var _ping = new FluentCommandLineParser<CliCommandPing>();
+
+                    _ping.SetupHelp("?", "help")
+                        .Callback(text => _ping.Object.Help(text));
+
+                    result = _ping.Parse(arguments);
+                    command = _ping.Object;
 
                     break;
 
@@ -81,6 +115,7 @@ namespace CcgVault
                     Console.WriteLine("ccgvault.exe <command> [--help|-?|[--opt1] [--opt2] ...]\n");
                     Console.WriteLine("Valid commands:\n");
                     Console.WriteLine("test");
+                    Console.WriteLine("ping");
                     Exit(0);
                     return;
             }
