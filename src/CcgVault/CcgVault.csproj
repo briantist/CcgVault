@@ -120,7 +120,4 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>"$(TargetFrameworkSDKToolsDirectory)tlbexp.exe" "$(TargetPath)" /out:"$(TargetDir)$(TargetName).tlb"</PostBuildEvent>
-  </PropertyGroup>
 </Project>
