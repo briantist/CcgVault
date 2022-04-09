@@ -9,13 +9,19 @@ on:
 
 env:
   SOLUTION: src\CcgVault.sln
+  RELEASE: src\CcgVault\bin\Release
+  BUILDVER: 0.0.99  # will be overridden on real releases
+
+defaults:
+  run:
+    shell: cmd
 
 jobs:
   build:
     name: build
-    runs-on: windows-2022
+    runs-on: windows-2019
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.1
@@ -28,5 +34,67 @@ jobs:
       - name: Build Solution
         run: msbuild.exe ${{ env.SOLUTION }} /p:platform="Any CPU" /p:configuration="Release"
 
-      - name: Run!
-        run: src\CcgVault\bin\Release\CcgVault.exe --help
+      - name: Build MSI
+        run: msi\build.cmd %BUILDVER%
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: release
+          path: ${{ env.RELEASE }}
+
+      - name: Upload MSI artifact
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: msi
+          path: msi/out/*.msi
+
+  test:
+    name: test [${{ matrix.os }}]
+    runs-on: ${{ matrix.os }}
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2019
+          - windows-2022
+    steps:
+      - name: Retrieve artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Run from build
+        working-directory: release
+        run: CcgVault.exe --help
+
+      - name: Install from MSI
+        shell: pwsh
+        working-directory: msi
+        # Inspired by https://serverfault.com/a/1007421/236470
+        run: |
+          $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
+
+          $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
+              '/I'
+              $msi.FullName
+              '/QN'
+              '/L*v!'
+              '${{ runner.temp }}\output.log'
+          ) -NoNewWindow -PassThru
+
+          $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
+              '-c'
+              "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
+          ) -NoNewWindow -PassThru
+
+          $main_process.WaitForExit()
+          $log_process.Kill()
+          exit $main_process.ExitCode
+
+      - name: Run from install
+        run: |
+          "%ProgramFiles%\CcgVault\CcgVault.exe" --help
