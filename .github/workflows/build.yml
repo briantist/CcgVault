@@ -95,19 +95,6 @@ jobs:
           $log_process.Kill()
           exit $main_process.ExitCode
 
-      # - name: Install from MSI
-      #   working-directory: msi
-      #   shell: pwsh
-      #   run: |
-      #     $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
-      #     Write-Host ($msi | fl * | out-string)
-
-      #     & msiexec.exe /I $msi.FullName /QN /L*vx! "${{ runner.temp }}\output.log"
-
-      # - name: Show installer output
-      #   if: always()
-      #   run: type "${{ runner.temp }}\output.log" || exit 0
-
       - name: Run from install
         run: |
           "%ProgramFiles%\CcgVault\CcgVault.exe" --help
