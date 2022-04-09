@@ -54,6 +54,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [build]
     strategy:
+      fail-fast: false
       matrix:
         os:
           - windows-2019
