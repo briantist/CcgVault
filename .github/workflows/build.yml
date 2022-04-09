@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: msi
-          path: src/msi/out/*.msi
+          path: msi/out/*.msi
 
   test:
     name: test [${{ matrix.os }}]
