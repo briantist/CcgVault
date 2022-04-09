@@ -97,6 +97,7 @@ jobs:
       #     exit $main_process.ExitCode
 
       - name: Install from MSI
+        working-directory: msi
         shell: pwsh
         run: |
           $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
