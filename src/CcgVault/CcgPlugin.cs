@@ -57,5 +57,10 @@ namespace CcgVault
             username = backend.Username;
             password = backend.Password;
         }
+
+        public string Ping()
+        {
+            return "Pong";
+        }
     }
 }
