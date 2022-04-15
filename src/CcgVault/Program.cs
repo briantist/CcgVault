@@ -221,6 +221,7 @@ namespace CcgVault
                     Console.WriteLine("Valid commands:\n");
                     Console.WriteLine("test");
                     Console.WriteLine("ping");
+                    Console.WriteLine("service");
                     Exit(0);
                     return;
             }
