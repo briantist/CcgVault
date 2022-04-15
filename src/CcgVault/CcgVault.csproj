@@ -119,5 +119,16 @@
       <Version>11.2.1</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="COMAdmin">
+      <Guid>{F618C513-DFB8-11D1-A2CF-00805FC79235}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
