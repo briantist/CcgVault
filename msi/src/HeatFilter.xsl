@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- https://stackoverflow.com/a/44766600/3905079 -->
+<!--
+    This whole thing is just to filter out EXE files, so that we can specify CcgVault.exe
+    manually, just so that we can put a <ServiceControl> element in the same component.
+ -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:wix="http://schemas.microsoft.com/wix/2006/wi" xmlns="http://schemas.microsoft.com/wix/2006/wi" version="1.0" exclude-result-prefixes="xsl wix">
 
     <xsl:output method="xml" indent="yes" omit-xml-declaration="yes" />

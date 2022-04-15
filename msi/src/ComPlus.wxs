@@ -21,11 +21,16 @@
                         ExeCommand="[CcgVault.exe] ping"
                         Return="check"
         />
+        <!--
+            Setting an NT service for COM+ has to be done through the COM+ admin
+            methods, so I've added a command for that too, since we can't do it
+            through WIX.
+         -->
         <CustomAction   Id="ServiceCreate"
                         FileKey="CcgVault.exe"
                         Execute="commit"
                         Impersonate="no"
-                        ExeCommand="[CcgVault.exe] service"
+                        ExeCommand="[CcgVault.exe] service --install"
                         Return="check"
         />
     </Fragment>

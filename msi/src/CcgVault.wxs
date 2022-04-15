@@ -10,6 +10,11 @@
                 <Directory Id="APPLICATIONROOTDIRECTORY" Name="CcgVault">
                     <Component Id="CcgVault.exe" Guid="8A3DDC03-DA64-407A-8B11-7A241DE0564F">
                         <File Id="CcgVault.exe" KeyPath="yes" Source="$(var.SourceDir)\CcgVault.exe" />
+                        <!--
+                            We want the installer to try and stop the service before attempting
+                            to modify files which could be in use. We can't create the service
+                            in the installer because it's a special COM+ thing.
+                         -->
                         <ServiceControl Id="SvcCtrl"
                                         Name="CcgVault"
                                         Stop="both"
@@ -25,60 +30,9 @@
             <ComponentGroupRef Id="CoComPlus" />
         </Feature>
 
-        <!-- <SetProperty    Id="KillComPlusServer"
-                        Sequence="execute"
-                        Before="KillComPlusServer"
-                        Property="WixQuietExecCmdLine"
-                        Value='"powershell.exe" -NonInteractive -NoProfile -OutputFormat Text -EncodedCommand $(var.KillCmd)'
-        /> -->
-        <!-- Value='"[WindowsFolder]System32\wbem\wmic.exe" Path win32_process Where "Caption Like &apos;[\%]dllhost.exe[\%]&apos; AND CommandLine Like &apos;[\%]2D79156B-1DE7-4A29-9428-7B7A591B176E[\%]&apos;" Call Terminate' -->
-        <!-- <Property   Id="WixQuietExecCmdLine"
-                    Value='"[WindowsFolder]System32\wbem\wmic.exe" Path win32_process Where "Caption Like &apos;%dllhost.exe%&apos; AND CommandLine Like &apos;%2D79156B-1DE7-4A29-9428-7B7A591B176E%&apos;" Call Terminate'
-        /> -->
-
-        <!-- <CustomAction   Id="KillComPlusServer"
-                        BinaryKey="WixCA"
-                        DllEntry="WixQuietExec"
-                        Execute="deferred"
-                        Impersonate="no"
-                        Return="check"
-        /> -->
-        <!-- <SetProperty    Id="KillComPlusServer"
-                        Sequence="execute"
-                        Before="KillComPlusServer"
-                        Property="ExeCommand"
-                        Value="[CcgVault.exe] terminate"
-        /> -->
-        <!-- <CustomAction   Id="KillComPlusServer"
-                        BinaryKey="WixCA"
-                        DllEntry="WixQuietExec"
-                        Execute="deferred"
-                        Impersonate="no"
-                        Return="check"
-        /> -->
-
-        <!-- <CustomAction   Id="KillComPlusServer"
-                        FileKey="CcgVault.exe"
-                        Execute="deferred"
-                        ExeCommand="[CcgVault.exe] terminate"
-                        Impersonate="no"
-                        Return="check"
-        /> -->
-
         <InstallExecuteSequence>
             <!-- Condition references: https://stackoverflow.com/a/538876/3905079 -->
-            <!--
-                We mainly need to kill a running server in repair mode, but there was
-                not an easy condition for that I could see. My test repair was
-                specifically not in maintenance mode so that didn't work.
-                But I figure it's harmless if there's no process running, and
-                in a case of running the server without having it installed via MSI,
-                it's better if we just always try to kill it.
-            -->
-            <!-- <Custom Action="KillComPlusServer" Before="RemoveFiles">
-                Installed
-            </Custom> -->
-            <!-- We want to run the implicit registration on install or repair. -->
+            <!-- We want to run these on install or repair. -->
             <Custom Action="ImplicitRegister" After="RegisterComPlus">
                 NOT REMOVE
             </Custom>
