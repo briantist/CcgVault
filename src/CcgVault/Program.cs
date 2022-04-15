@@ -196,6 +196,23 @@ namespace CcgVault
 
                     break;
                         
+                case "terminate":
+                    // We don't use a using here, because once the server is terminated,
+                    // the Dispose call is going to fail too. We're going to exit right
+                    // after this anyway.
+                    var ccg = new CcgPlugin();
+                    try
+                    {
+                        ccg.Terminate();
+                    }
+                    catch (COMException e) when (e.HResult == -2147023170) // 0x800706BE
+                    {
+                        // this is expected; the server process will terminate,
+                        // which will prevent the remote procedure call from completing.
+                    }
+                    Exit(0);
+                    return;
+
                 case "help":
                 case "":
                 default:
