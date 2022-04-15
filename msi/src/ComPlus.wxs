@@ -21,6 +21,13 @@
                         ExeCommand="[CcgVault.exe] ping"
                         Return="check"
         />
+        <CustomAction   Id="ServiceCreate"
+                        FileKey="CcgVault.exe"
+                        Execute="commit"
+                        Impersonate="no"
+                        ExeCommand="[CcgVault.exe] service"
+                        Return="check"
+        />
     </Fragment>
     <Fragment>
         <ComponentGroup Id="CoComPlus">
