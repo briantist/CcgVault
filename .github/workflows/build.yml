@@ -42,7 +42,7 @@ jobs:
         with:
           if-no-files-found: error
           retention-days: 1
-          name: release
+          name: bin
           path: ${{ env.RELEASE }}
 
       - name: Upload MSI artifact
@@ -54,7 +54,7 @@ jobs:
           path: msi/out/*.msi
 
   test:
-    name: test [${{ matrix.os }}]
+    name: test - ${{ matrix.mode }} [${{ matrix.os }}]
     runs-on: ${{ matrix.os }}
     needs: [build]
     strategy:
@@ -63,20 +63,28 @@ jobs:
         os:
           - windows-2019
           - windows-2022
+        mode:
+          - bin
+          - msi
     steps:
       - uses: actions/checkout@v3
 
       - name: Retrieve artifacts
         uses: actions/download-artifact@v3
+        with:
+          name: ${{ matrix.mode }}
+          path: .artifact
 
       - name: Run from build
-        working-directory: release
+        if: matrix.mode == 'bin'
+        working-directory: .artifact
         run: CcgVault.exe --help
 
       - name: Install from MSI
+        if: matrix.mode == 'msi'
         shell: pwsh
         run: |
-          $msi = Get-ChildItem -Path .\msi\*.msi -File | Select-Object -First 1
+          $msi = Get-ChildItem -Path .\.artifact\*.msi -File | Select-Object -First 1
 
           & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
 
