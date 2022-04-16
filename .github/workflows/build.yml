@@ -76,15 +76,7 @@ jobs:
       - name: Install from MSI
         shell: pwsh
         run: |
-          pwd
-
           $msi = Get-ChildItem -Path .\msi\*.msi -File | Select-Object -First 1
-          $msi
-
-          gci .\test
-          gci .\test\integration
-
-          gcm .\test\integration\*
 
           & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
 

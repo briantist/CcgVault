@@ -7,11 +7,11 @@ param(
         $_.Exists
     })]
     [System.IO.FileInfo]
-    $LiteralPath ,
+    $LiteralPath,
 
     [Parameter(Mandatory)]
     [ValidateScript({
-        -not [System.IO.DirectoryInfo]::new($_.FulName).Exists
+        -not [System.IO.DirectoryInfo]::new($_.FullName).Exists
     })]
     [System.IO.FileInfo]
     $LogFile,
