@@ -89,5 +89,6 @@ jobs:
           & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
 
       - name: Run from install
+        if: matrix.mode == 'msi'
         run: |
           "%ProgramFiles%\CcgVault\CcgVault.exe" --help
