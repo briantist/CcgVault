@@ -64,6 +64,8 @@ jobs:
           - windows-2019
           - windows-2022
     steps:
+      - uses: actions/checkout@v3
+
       - name: Retrieve artifacts
         uses: actions/download-artifact@v3
 
