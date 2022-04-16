@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.EnterpriseServices;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
@@ -56,6 +53,16 @@ namespace CcgVault
             domainName = backend.Domain;
             username = backend.Username;
             password = backend.Password;
+        }
+
+        public string Ping()
+        {
+            return "Pong";
+        }
+
+        public void Terminate(int code = 0)
+        {
+            Environment.Exit(code);
         }
     }
 }

@@ -1,11 +1,6 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using VaultSharp;
-using VaultSharp.V1.AuthMethods.Token;
 using YamlDotNet.Serialization;
 
 namespace CcgVault

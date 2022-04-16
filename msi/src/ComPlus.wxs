@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:complus="http://schemas.microsoft.com/wix/ComPlusExtension">
+    <Fragment>
+        <DirectoryRef Id="APPLICATIONROOTDIRECTORY" />
+    </Fragment>
+    <Fragment>
+        <!--
+            Since I cannot get ComPlusAssembly working, I've added a simple method
+            to the assembly that we can call via the command line. Since any call
+            to a ServicedComponent seems to set it up and install it, this works
+            nicely as an implicit way of getting the component in place.
+
+            Although we don't have to set up the COM+ application in the installer
+            at all with this method, we're still doing so, so that uninstallation
+            cleans it up!
+         -->
+        <CustomAction   Id="ImplicitRegister"
+                        FileKey="CcgVault.exe"
+                        Execute="commit"
+                        Impersonate="no"
+                        ExeCommand="[CcgVault.exe] ping"
+                        Return="check"
+        />
+        <!--
+            Setting an NT service for COM+ has to be done through the COM+ admin
+            methods, so I've added a command for that too, since we can't do it
+            through WIX.
+         -->
+        <CustomAction   Id="ServiceCreate"
+                        FileKey="CcgVault.exe"
+                        Execute="commit"
+                        Impersonate="no"
+                        ExeCommand="[CcgVault.exe] service --install"
+                        Return="check"
+        />
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="CoComPlus">
+            <Component Id="ComPlus" Guid="5e016a88-9a90-4b08-946a-5f4afd3b5d14" Directory="APPLICATIONROOTDIRECTORY">
+                <!--
+                    It took WAY too long to find the proper identity for Local Service:
+                    https://docs.microsoft.com/en-us/windows/win32/cossdk/applications#identity
+                 -->
+                <complus:ComPlusApplication Id="CPApp.CcgVault"
+                                            ApplicationId="2D79156B-1DE7-4A29-9428-7B7A591B176E"
+                                            Name="CcgVault"
+                                            Description="CcgVault Plugin"
+                                            AccessChecksLevel="applicationLevel"
+                                            Identity="NT Authority\LocalService"
+                >
+                <!--
+                    Cannot get ComPlusAssembly to work with net4.
+                    See also:
+                    - https://sourceforge.net/p/wix/bugs/2305/
+                    - https://github.com/wixtoolset/issues/issues/2916
+                    - https://stackoverflow.com/q/58878730/3905079
+                    - https://stackoverflow.com/q/2179359/3905079
+                -->
+                <!-- AssemblyName="CcgVault, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a90f4901d86459c7, processorArchitecture=AMD64" -->
+                <!-- DllPathFromGAC="yes" -->
+                <!-- RegisterInCommit="yes" -->
+                <!-- <complus:ComPlusAssembly    Id="CPAssembly.CcgVault"
+                                            Type=".net"
+                                            DllPath="[#CcgVault.exe]"
+                                            TlbPath="[#CcgVault.tlb]"
+                    /> -->
+                </complus:ComPlusApplication>
+            </Component>
+        </ComponentGroup>
+    </Fragment>
+</Wix>

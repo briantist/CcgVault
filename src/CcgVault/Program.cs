@@ -1,10 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using COMAdmin;
 using Fclp;
+using System;
+using System.Diagnostics;
+using System.EnterpriseServices;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace CcgVault
 {
@@ -43,6 +44,99 @@ namespace CcgVault
             }
         }
 
+        class CliCommandPing : ICliCommand
+        {
+            public void Help(string text)
+            {
+                Console.WriteLine("ccgvault.exe ping");
+                Console.WriteLine();
+                Console.WriteLine("Runs a simple method against the COM+ service, implicitly registering it in the process.");
+                Console.WriteLine();
+                Console.WriteLine("The following options are accepted:");
+                Console.WriteLine(text);
+                Exit(-1);
+            }
+
+            public void Invoke()
+            {
+                using (var ccg = new CcgPlugin())
+                {
+                    Console.WriteLine("Expecting response: 'Pong'");
+                    Console.WriteLine($"Got response: '{ccg.Ping()}'");
+                }
+            }
+        }
+
+        class CliCommandService : ICliCommand
+        {
+            public bool Install { get; set; }
+            public bool Uninstall { get; set; }
+
+            public void Help(string text)
+            {
+                Console.WriteLine("ccgvault.exe service");
+                Console.WriteLine();
+                Console.WriteLine("Installs or uninstalls a Windows (NT) service to associate with the COM+ application.");
+                Console.WriteLine();
+                Console.WriteLine("The following options are accepted:");
+                Console.WriteLine(text);
+                Exit(-1);
+            }
+
+            public void Invoke()
+            {
+                if (Install && Uninstall)
+                {
+                    Console.WriteLine("Both --install and --uninstall were specified. Choose one or the other.");
+                    Exit(-1);
+                }
+
+                if (!(Install || Uninstall))
+                {
+                    Console.WriteLine("Neither --install nor --uninstall were specified. Choose one or the other.");
+                    Exit(-1);
+                }
+
+                var appId = Assembly.GetExecutingAssembly().GetCustomAttribute<ApplicationIDAttribute>().Value;
+                var serviceName = Assembly.GetExecutingAssembly().GetCustomAttribute<ApplicationNameAttribute>().Value;
+
+                // https://docs.microsoft.com/en-us/windows/win32/api/comadmin/nf-comadmin-icomadmincatalog2-createserviceforapplication
+                var oCatalog = (ICOMAdminCatalog2)Activator.CreateInstance(Type.GetTypeFromProgID("ComAdmin.COMAdminCatalog"));
+
+                if (Install)
+                {
+                    try
+                    {
+                        oCatalog.CreateServiceForApplication(
+                            bstrApplicationIDOrName: appId.ToString("B"), // Using an AppID, the GUID needs to be formatted with curly braces {}
+                            bstrServiceName: serviceName,
+                            bstrStartType: "SERVICE_DEMAND_START",
+                            bstrErrorControl: "SERVICE_ERROR_NORMAL",
+                            bstrDependencies: null,
+                            bstrRunAs: null,
+                            bstrPassword: null,
+                            bDesktopOk: false);
+                    }
+                    catch (COMException e) when (e.HResult == -2147023823) // 0x80070431 ERROR_SERVICE_EXISTS
+                    {
+                        // ignore
+                    }
+                }
+
+                if (Uninstall)
+                { 
+                    try
+                    {
+                        oCatalog.DeleteServiceForApplication(bstrApplicationIDOrName: appId.ToString("B")); // Using an AppID, the GUID needs to be formatted with curly braces {}
+                    }
+                    catch (COMException e) when (e.HResult == -2146368458) // 0x80110436 COMADMIN_E_SERVICENOTINSTALLED
+                    {
+                        // ignore
+                    }
+                }
+            }
+        }
+
         public static void Main(string[] args)
         {
             string cmd = "";
@@ -60,19 +154,64 @@ namespace CcgVault
             switch (cmd)
             {
                 case "test":
-                    var p = new FluentCommandLineParser<CliCommandTest>();
+                    var _test = new FluentCommandLineParser<CliCommandTest>();
 
-                    p.SetupHelp("?", "help")
-                     .Callback(text => p.Object.Help(text));
+                    _test.SetupHelp("?", "help")
+                        .Callback(text => _test.Object.Help(text));
 
-                    p.Setup(arg => arg.Input)
-                     .As('i', "input")
-                     .Required();
+                    _test.Setup(arg => arg.Input)
+                        .As('i', "input")
+                        .Required();
 
-                    result = p.Parse(arguments);
-                    command = p.Object;
+                    result = _test.Parse(arguments);
+                    command = _test.Object;
 
                     break;
+
+                case "ping":
+                    var _ping = new FluentCommandLineParser<CliCommandPing>();
+
+                    _ping.SetupHelp("?", "help")
+                        .Callback(text => _ping.Object.Help(text));
+
+                    result = _ping.Parse(arguments);
+                    command = _ping.Object;
+                    
+                    break;
+
+                case "service":
+                    var _service = new FluentCommandLineParser<CliCommandService>();
+
+                    _service.SetupHelp("?", "help")
+                        .Callback(text => _service.Object.Help(text));
+
+                    _service.Setup<bool>(arg => arg.Install)
+                        .As('i', "install");
+
+                    _service.Setup<bool>(arg => arg.Uninstall)
+                        .As('u', "uninstall");
+
+                    result = _service.Parse(arguments);
+                    command = _service.Object;
+
+                    break;
+                        
+                case "terminate":
+                    // We don't use a using here, because once the server is terminated,
+                    // the Dispose call is going to fail too. We're going to exit right
+                    // after this anyway.
+                    var ccg = new CcgPlugin();
+                    try
+                    {
+                        ccg.Terminate();
+                    }
+                    catch (COMException e) when (e.HResult == -2147023170) // 0x800706BE
+                    {
+                        // this is expected; the server process will terminate,
+                        // which will prevent the remote procedure call from completing.
+                    }
+                    Exit(0);
+                    return;
 
                 case "help":
                 case "":
@@ -81,6 +220,8 @@ namespace CcgVault
                     Console.WriteLine("ccgvault.exe <command> [--help|-?|[--opt1] [--opt2] ...]\n");
                     Console.WriteLine("Valid commands:\n");
                     Console.WriteLine("test");
+                    Console.WriteLine("ping");
+                    Console.WriteLine("service");
                     Exit(0);
                     return;
             }

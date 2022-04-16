@@ -1,17 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*" UpgradeCode="9b5ec46d-a285-45a3-91d6-24a4af94ddd0" Version="$(var.CcgVaultVer)" Language="1033" Name="CcgVault" Manufacturer="CcgVault">
-        <Package InstallerVersion="300" Compressed="yes" Description="!(bind.property.ProductName) !(bind.property.ProductVersion)" Platform="x64"/>
+        <Package InstallerVersion="300" Compressed="yes" Description="!(bind.property.ProductName) !(bind.property.ProductVersion)" Platform="x64" />
+        <MajorUpgrade IgnoreRemoveFailure="yes" AllowDowngrades="no" AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
         <Media Id="1" Cabinet="CcgVault.cab" EmbedCab="yes" />
 
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFiles64Folder">
-                <Directory Id="APPLICATIONROOTDIRECTORY" Name="CcgVault"/>
+                <Directory Id="APPLICATIONROOTDIRECTORY" Name="CcgVault">
+                    <Component Id="CcgVault.exe" Guid="8A3DDC03-DA64-407A-8B11-7A241DE0564F">
+                        <File Id="CcgVault.exe" KeyPath="yes" Source="$(var.SourceDir)\CcgVault.exe" />
+                        <!--
+                            We want the installer to try and stop the service before attempting
+                            to modify files which could be in use. We can't create the service
+                            in the installer because it's a special COM+ thing.
+                         -->
+                        <ServiceControl Id="SvcCtrl"
+                                        Name="CcgVault"
+                                        Stop="both"
+                        />
+                    </Component>
+                </Directory>
             </Directory>
         </Directory>
 
         <Feature Id="MainApplication" Title="CcgVault Plugin" Level="1">
+            <ComponentRef Id="CcgVault.exe" />
             <ComponentGroupRef Id="CoGr" />
+            <ComponentGroupRef Id="CoComPlus" />
         </Feature>
+
+        <InstallExecuteSequence>
+            <!-- Condition references: https://stackoverflow.com/a/538876/3905079 -->
+            <!-- We want to run these on install or repair. -->
+            <Custom Action="ImplicitRegister" After="RegisterComPlus">
+                NOT REMOVE
+            </Custom>
+            <Custom Action="ServiceCreate" After="ImplicitRegister">
+                NOT REMOVE
+            </Custom>
+        </InstallExecuteSequence>
     </Product>
 </Wix>

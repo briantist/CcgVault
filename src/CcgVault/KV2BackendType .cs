@@ -1,11 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using VaultSharp;
 using VaultSharp.V1.Commons;
-using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace CcgVault
