@@ -1,5 +1,5 @@
 ---
-name: Build
+name: Build & Test
 on:
   workflow_dispatch:
   push:
@@ -73,27 +73,11 @@ jobs:
 
       - name: Install from MSI
         shell: pwsh
-        working-directory: msi
         # Inspired by https://serverfault.com/a/1007421/236470
         run: |
-          $msi = Get-ChildItem -Path *.msi -File | Select-Object -First 1
+          $msi = Get-ChildItem -Path .\msi\*.msi -File | Select-Object -First 1
 
-          $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
-              '/I'
-              $msi.FullName
-              '/QN'
-              '/L*v!'
-              '${{ runner.temp }}\output.log'
-          ) -NoNewWindow -PassThru
-
-          $log_process = Start-Process -FilePath "pwsh.exe" -ArgumentList @(
-              '-c'
-              "Get-Content -LiteralPath '${{ runner.temp }}\output.log' -Wait"
-          ) -NoNewWindow -PassThru
-
-          $main_process.WaitForExit()
-          $log_process.Kill()
-          exit $main_process.ExitCode
+          test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
 
       - name: Run from install
         run: |
