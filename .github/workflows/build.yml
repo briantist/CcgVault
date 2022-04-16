@@ -70,15 +70,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Retrieve artifacts
+        id: artifact
         uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.mode }}
           path: .artifact
-
-      - name: Run from build
-        if: matrix.mode == 'bin'
-        working-directory: .artifact
-        run: CcgVault.exe --help
 
       - name: Install from MSI
         if: matrix.mode == 'msi'
@@ -88,7 +84,17 @@ jobs:
 
           & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
 
-      - name: Run from install
-        if: matrix.mode == 'msi'
+      - name: Set bin location
+        shell: pwsh
         run: |
-          "%ProgramFiles%\CcgVault\CcgVault.exe" --help
+          $path = if ('${{ matrix.mode }}' -eq 'msi') {
+              $env:ProgramFiles | Join-Path -ChildPath 'CcgVault'
+          }
+          else {
+              '${{ steps.artifact.outputs.download-path }}'
+          }
+          echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
+
+      - name: Run simple help
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe --help
