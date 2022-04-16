@@ -77,7 +77,7 @@ jobs:
         run: |
           $msi = Get-ChildItem -Path .\msi\*.msi -File | Select-Object -First 1
 
-          test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
+          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
 
       - name: Run from install
         run: |
