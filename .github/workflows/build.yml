@@ -84,7 +84,7 @@ jobs:
           path: .artifact
 
       - name: Set MSI names
-        if: starsWith(matrix.mode, 'msi')
+        if: startsWith(matrix.mode, 'msi')
         shell: pwsh
         run: |
           $fName = 'ccgvault_v{0}_x64.msi'
