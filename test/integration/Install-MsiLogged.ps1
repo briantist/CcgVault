@@ -17,6 +17,11 @@ param(
     $LogFile,
 
     [Parameter()]
+    [ValidateSet('I', 'X', 'F')]
+    [String]
+    $Mode = 'I',
+
+    [Parameter()]
     [int]
     $TimeoutMs = (5 * 60 * 1000)
     #             ^ minutes
@@ -24,7 +29,7 @@ param(
 
 End {
     $main_process = Start-Process -FilePath "msiexec.exe" -ArgumentList @(
-        '/I'
+        "/$Mode"
         $LiteralPath.FullName
         '/QN'
         '/L*v!'

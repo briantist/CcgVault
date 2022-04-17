@@ -10,7 +10,8 @@ on:
 env:
   SOLUTION: src\CcgVault.sln
   RELEASE: src\CcgVault\bin\Release
-  BUILDVER: 0.0.99  # will be overridden on real releases
+  BUILDVER1: 0.0.99
+  BUILDVER2: 0.0.100
 
 defaults:
   run:
@@ -34,8 +35,11 @@ jobs:
       - name: Build Solution
         run: msbuild.exe ${{ env.SOLUTION }} /m /p:platform="Any CPU" /p:configuration="Release"
 
-      - name: Build MSI
-        run: msi\build.cmd %BUILDVER%
+      - name: Build MSI 1
+        run: msi\build.cmd %BUILDVER1%
+
+      - name: Build MSI 2
+        run: msi\build.cmd %BUILDVER2%
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v3
@@ -45,7 +49,7 @@ jobs:
           name: bin
           path: ${{ env.RELEASE }}
 
-      - name: Upload MSI artifact
+      - name: Upload MSI artifacts
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
@@ -65,7 +69,10 @@ jobs:
           - windows-2022
         mode:
           - bin
-          - msi
+          - msi-fresh
+          - msi-upgrade-self
+          - msi-upgrade
+          - msi-reinstall
     steps:
       - uses: actions/checkout@v3
 
@@ -76,18 +83,54 @@ jobs:
           name: ${{ matrix.mode }}
           path: .artifact
 
-      - name: Install from MSI
-        if: matrix.mode == 'msi'
+      - name: Set MSI names
         shell: pwsh
         run: |
-          $msi = Get-ChildItem -Path .\.artifact\*.msi -File | Select-Object -First 1
+          $fName = 'ccgvault_v{0}_x64.msi'
 
-          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $msi -LogFile '${{ runner.temp }}\output.log'
+          for ($i = 1 ; $i -le 2 ; ++$i) {
+              $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
+              $name = $fName -f $v
+              $path = '${{ steps.artifact.outputs.download-path }}' | Join-Path -ChildPath $name
+
+              echo "MSI${i}=$name" >> $env:GITHUB_ENV
+              echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
+          }
+
+      - name: Install from MSI
+        if: startsWith(matrix.mode, 'msi')
+        shell: pwsh
+        run: |
+          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Upgrade self (install same version)
+        if: endsWith(matrix.mode, 'upgrade-self')
+        shell: pwsh
+        run: |
+          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Upgrade
+        if: endsWith(matrix.mode, 'upgrade')
+        shell: pwsh
+        run: |
+          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH2 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Uninstall
+        if: endsWith(matrix.mode, 'reinstall')
+        shell: pwsh
+        run: |
+          & .\test\integration\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Reinstall
+        if: endsWith(matrix.mode, 'reinstall')
+        shell: pwsh
+        run: |
+          & .\test\integration\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Set bin location
         shell: pwsh
         run: |
-          $path = if ('${{ matrix.mode }}' -eq 'msi') {
+          $path = if ('${{ matrix.mode }}'.StartsWith('msi')) {
               $env:ProgramFiles | Join-Path -ChildPath 'CcgVault'
           }
           else {
