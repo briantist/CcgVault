@@ -80,10 +80,11 @@ jobs:
         id: artifact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ matrix.mode }}
+          # name: ${{ matrix.mode }}
           path: .artifact
 
       - name: Set MSI names
+        if: starsWith(matrix.mode, 'msi')
         shell: pwsh
         run: |
           $fName = 'ccgvault_v{0}_x64.msi'
@@ -91,7 +92,9 @@ jobs:
           for ($i = 1 ; $i -le 2 ; ++$i) {
               $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
               $name = $fName -f $v
-              $path = '${{ steps.artifact.outputs.download-path }}' | Join-Path -ChildPath $name
+              $path = '${{ steps.artifact.outputs.download-path }}' |
+                  Join-Path -ChildPath 'msi' |
+                  Join-Path -ChildPath $name
 
               echo "MSI${i}=$name" >> $env:GITHUB_ENV
               echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
@@ -134,7 +137,8 @@ jobs:
               $env:ProgramFiles | Join-Path -ChildPath 'CcgVault'
           }
           else {
-              '${{ steps.artifact.outputs.download-path }}'
+              '${{ steps.artifact.outputs.download-path }}' |
+                  Join-Path -ChildPath 'bin'
           }
           echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
 
