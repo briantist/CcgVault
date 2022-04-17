@@ -8,6 +8,12 @@ If [%~1] == [] (
 pushd "%~dp0\.."
 setlocal
 
+if [%~2] == [] (
+    set CLEAN=*.*
+) ELSE (
+    set CLEAN=%~2
+)
+
 set PATH=%WIX%bin;%PATH%
 set VER=%~1
 set OUT=msi\out
@@ -16,7 +22,7 @@ set GEN=%SRC%\gen
 set FRAG=%GEN%\Release.wxs
 
 del /F /Q "%GEN%\*.wxs"
-del /F /Q "%OUT%\*.*"
+del /F /Q "%OUT%\%CLEAN%"
 
 heat.exe dir src\CcgVault\bin\Release -out %FRAG% -suid -ag -sreg -srd -cg CoGr -dr APPLICATIONROOTDIRECTORY -var var.SourceDir -t %SRC%\HeatFilter.xsl
 candle.exe -ext WixComPlusExtension %SRC%\*.wxs %GEN%\*.wxs -dCcgVaultVer=%VER% -dSourceDir=src\CcgVault\bin\Release -o msi\out\

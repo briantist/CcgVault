@@ -39,7 +39,7 @@ jobs:
         run: msi\build.cmd %BUILDVER1%
 
       - name: Build MSI 2
-        run: msi\build.cmd %BUILDVER2%
+        run: msi\build.cmd %BUILDVER2% *.wix*
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v3
@@ -80,7 +80,6 @@ jobs:
         id: artifact
         uses: actions/download-artifact@v3
         with:
-          # name: ${{ matrix.mode }}
           path: .artifact
 
       - name: Set MSI names
