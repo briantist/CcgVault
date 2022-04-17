@@ -9,8 +9,7 @@ param(
 
 BeforeAll {
     $data = Import-PowerShellDataFile -LiteralPath $PSScriptRoot\TestData.psd1
-    #$service =  Get-CimInstance -ClassName Win32_Service -Filter "Name = '$ServiceName'"
-    $Script:service = Get-Service -Name $ServiceName
+    $Script:service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
 
     $appId = [Guid]::Parse($data.ComPlus.ApplicationID)
     $Script:binaryPath = '{0} /ProcessId:{1}' -f @(
