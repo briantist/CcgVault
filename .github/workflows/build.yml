@@ -73,6 +73,8 @@ jobs:
           - msi-upgrade-self
           - msi-upgrade
           - msi-reinstall
+    env:
+      INTEGRATION: tests\integration
     steps:
       - uses: actions/checkout@v3
 
@@ -81,6 +83,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: .artifact
+
+      - name: Install PowerShell modules
+        if: startsWith(matrix.mode, 'msi')
+        uses: potatoqualitee/psmodulecache@v4.5
+        with:
+          modules-to-cache: MSI:3.3.4
+          shell: pwsh
 
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
@@ -103,7 +112,13 @@ jobs:
         if: startsWith(matrix.mode, 'msi')
         shell: pwsh
         run: |
-          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & $env:INTEGRATION\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present
+        if: startsWith(matrix.mode, 'msi')
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Installed -Output Detailed
 
       - name: Upgrade self (install same version)
         if: endsWith(matrix.mode, 'upgrade-self')
@@ -111,11 +126,26 @@ jobs:
         run: |
           & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
+      - name: Test present
+        if: endsWith(matrix.mode, 'upgrade-self')
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Installed -Output Detailed
+
       - name: Upgrade
         if: endsWith(matrix.mode, 'upgrade')
         shell: pwsh
         run: |
           & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH2 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present (upgraded)
+        if: endsWith(matrix.mode, 'upgrade')
+        shell: pwsh
+        run: |
+          $c = New-PesterContainer -Path $env:INTEGRATION\msi.tests.ps1 -Data @{
+              ExpectedVersion = $env:BUILDVER2
+          }
+          Invoke-Pester -Container $c -Tag Installed -Output Detailed
 
       - name: Uninstall
         if: endsWith(matrix.mode, 'reinstall')
@@ -123,11 +153,23 @@ jobs:
         run: |
           & .\test\integration\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
+      - name: Test absent
+        if: endsWith(matrix.mode, 'reinstall')
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Absent -Output Detailed
+
       - name: Reinstall
         if: endsWith(matrix.mode, 'reinstall')
         shell: pwsh
         run: |
           & .\test\integration\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present
+        if: endsWith(matrix.mode, 'reinstall')
+        shell: pwsh
+        run: |
+          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Installed -Output Detailed
 
       - name: Set bin location
         shell: pwsh
