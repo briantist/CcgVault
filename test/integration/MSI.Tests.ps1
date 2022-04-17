@@ -17,9 +17,9 @@ param(
 )
 
 BeforeAll {
-    $msi = Get-MSIProductInfo -Name $Name
+    $Script:msi = Get-MSIProductInfo -Name $Name
 
-    [System.IO.DirectoryInfo]$path = if ($InstallPath) {
+    [System.IO.DirectoryInfo]$Script:path = if ($InstallPath) {
         $InstallPath
     }
     else {

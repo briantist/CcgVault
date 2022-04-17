@@ -110,66 +110,82 @@ jobs:
 
       - name: Install from MSI
         if: startsWith(matrix.mode, 'msi')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          & $env:INTEGRATION\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: startsWith(matrix.mode, 'msi')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
+
 
       - name: Upgrade self (install same version)
         if: endsWith(matrix.mode, 'upgrade-self')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: endsWith(matrix.mode, 'upgrade-self')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Upgrade
         if: endsWith(matrix.mode, 'upgrade')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          & .\test\integration\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH2 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH2 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present (upgraded)
         if: endsWith(matrix.mode, 'upgrade')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          $c = New-PesterContainer -Path $env:INTEGRATION\msi.tests.ps1 -Data @{
+          $c = New-PesterContainer -Path MSI.Tests.ps1 -Data @{
               ExpectedVersion = $env:BUILDVER2
           }
           Invoke-Pester -Container $c -Tag Installed -Output Detailed
+          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Uninstall
         if: endsWith(matrix.mode, 'reinstall')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          & .\test\integration\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test absent
         if: endsWith(matrix.mode, 'reinstall')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Absent -Output Detailed
+          Invoke-Pester -Path MSI.Tests.ps1 -Tag Absent -Output Detailed
+          Invoke-Pester -Path NTService.Tests.ps1 -Tag Absent -Output Detailed
 
       - name: Reinstall
         if: endsWith(matrix.mode, 'reinstall')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          & .\test\integration\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: endsWith(matrix.mode, 'reinstall')
+        working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          Invoke-Pester -Path $env:INTEGRATION\msi.tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path $env:INTEGRATION\MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Set bin location
         shell: pwsh
