@@ -74,7 +74,7 @@ jobs:
           - msi-upgrade
           - msi-reinstall
     env:
-      INTEGRATION: tests\integration
+      INTEGRATION: .\tests\integration
     steps:
       - uses: actions/checkout@v3
 
