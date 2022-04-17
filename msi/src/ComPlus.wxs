@@ -65,6 +65,7 @@
                                             TlbPath="[#CcgVault.tlb]"
                     /> -->
                 </complus:ComPlusApplication>
+                <RemoveFolder Id="RemoveComPlusApplicationDir" On="uninstall" />
             </Component>
         </ComponentGroup>
     </Fragment>
