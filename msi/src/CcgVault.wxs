@@ -19,7 +19,6 @@
                                         Name="CcgVault"
                                         Stop="both"
                         />
-                        <RemoveFolder Id="RemoveApplicationDir" On="uninstall" />
                     </Component>
                 </Directory>
             </Directory>
