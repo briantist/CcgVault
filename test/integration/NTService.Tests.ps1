@@ -36,6 +36,10 @@ Describe 'Service tests' {
             $service.ServicesDependedOn.Count | Should -BeGreaterOrEqual 1
             $service.ServicesDependedOn.Name | Should -Contain rpcss
         }
+
+        It 'Serice start mode is <data.Service.StartMode>' {
+            $service.StartType | Should -Be $data.Service.StartMode
+        }
     }
 
     Context 'Absent' -Tag Absent {
