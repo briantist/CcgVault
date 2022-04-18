@@ -184,7 +184,7 @@ jobs:
         working-directory: ${{ env.INTEGRATION }}
         shell: pwsh
         run: |
-          Invoke-Pester -Path $env:INTEGRATION\MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Set bin location
