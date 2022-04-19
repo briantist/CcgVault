@@ -13,14 +13,13 @@ env:
   BUILDVER1: 0.0.99
   BUILDVER2: 0.0.100
 
-defaults:
-  run:
-    shell: cmd
-
 jobs:
   build:
     name: build
     runs-on: windows-2019
+    defaults:
+      run:
+        shell: cmd
     steps:
       - uses: actions/checkout@v3
 
@@ -75,6 +74,10 @@ jobs:
           - msi-reinstall
     env:
       INTEGRATION: .\test\integration
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ env.INTEGRATION }}
     steps:
       - uses: actions/checkout@v3
 
@@ -93,7 +96,6 @@ jobs:
 
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
-        shell: pwsh
         run: |
           $fName = 'ccgvault_v{0}_x64.msi'
 
@@ -110,15 +112,11 @@ jobs:
 
       - name: Install from MSI
         if: startsWith(matrix.mode, 'msi')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: startsWith(matrix.mode, 'msi')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
@@ -126,30 +124,22 @@ jobs:
 
       - name: Upgrade self (install same version)
         if: endsWith(matrix.mode, 'upgrade-self')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: endsWith(matrix.mode, 'upgrade-self')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Upgrade
         if: endsWith(matrix.mode, 'upgrade')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH2 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present (upgraded)
         if: endsWith(matrix.mode, 'upgrade')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           $c = New-PesterContainer -Path MSI.Tests.ps1 -Data @{
               ExpectedVersion = $env:BUILDVER2
@@ -159,36 +149,27 @@ jobs:
 
       - name: Uninstall
         if: endsWith(matrix.mode, 'reinstall')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test absent
         if: endsWith(matrix.mode, 'reinstall')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Absent -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Absent -Output Detailed
 
       - name: Reinstall
         if: endsWith(matrix.mode, 'reinstall')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           & .\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: endsWith(matrix.mode, 'reinstall')
-        working-directory: ${{ env.INTEGRATION }}
-        shell: pwsh
         run: |
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Set bin location
-        shell: pwsh
         run: |
           $path = if ('${{ matrix.mode }}'.StartsWith('msi')) {
               $env:ProgramFiles | Join-Path -ChildPath 'CcgVault'
@@ -200,5 +181,6 @@ jobs:
           echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
 
       - name: Run simple help
+        shell: cmd
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe --help
