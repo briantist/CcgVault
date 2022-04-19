@@ -138,9 +138,10 @@ jobs:
         run: |
           & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
-      - name: Test present
+      - name: Test present (self-upgrade)
         if: endsWith(matrix.mode, 'upgrade-self')
         run: |
+          . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
@@ -152,6 +153,7 @@ jobs:
       - name: Test present (upgraded)
         if: endsWith(matrix.mode, 'upgrade')
         run: |
+          . .\Initialize-Pester.ps1
           $c = New-PesterContainer -Path MSI.Tests.ps1 -Data @{
               ExpectedVersion = $env:BUILDVER2
           }
@@ -166,6 +168,7 @@ jobs:
       - name: Test absent
         if: endsWith(matrix.mode, 'reinstall')
         run: |
+          . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Absent -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Absent -Output Detailed
 
@@ -177,6 +180,7 @@ jobs:
       - name: Test present
         if: endsWith(matrix.mode, 'reinstall')
         run: |
+          . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
