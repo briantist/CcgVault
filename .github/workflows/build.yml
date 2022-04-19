@@ -81,6 +81,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # https://github.com/beatcracker/Powershell-Misc
+      # We want to use:
+      # - https://github.com/beatcracker/Powershell-Misc/blob/d0704cea3d1eb948f9720dc8826a630e86150c08/Write-Host.ps1
+      - name: PowerShell-Misc
+        uses: actions/checkout@v3
+        with:
+          repository: beatcracker/Powershell-Misc
+          ref: d0704cea3d1eb948f9720dc8826a630e86150c08
+          path: .powershell
+
       - name: Retrieve artifacts
         id: artifact
         uses: actions/download-artifact@v3
@@ -118,6 +128,7 @@ jobs:
       - name: Test present
         if: startsWith(matrix.mode, 'msi')
         run: |
+          . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
