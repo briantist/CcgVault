@@ -14,7 +14,7 @@ The CCG (Container Credential Guard) handles retrieval of the gMSA's managed pas
 
 With a domain joined container host, the computer's credentials are used to retrieve the gMSA's managed password. This is typically how gMSAs are used.
 
-With a container host that is not domain joined, the crdentials of a standard user account in the domain that has permission to retrieve the gMSA's managed password, must be provided to the CCG, so that it can use those credentials in place of the machine account.
+With a container host that is not domain joined, the credentials of a standard user account in the domain that has permission to retrieve the gMSA's managed password, must be provided to the CCG, so that it can use those credentials in place of the machine account.
 
 The only way to provide these credentials to the CCG is via an out-of-process COM plugin that implements the [`ICcgDomainAuthCredentials` interface](https://docs.microsoft.com/en-us/windows/win32/api/ccgplugins/nn-ccgplugins-iccgdomainauthcredentials).
 
@@ -24,7 +24,7 @@ This project is a plugin for providing the necessary credentials to the CCG, wit
 
 # Coming soon
 
-What is available here is a sort of MVP of this, with the capability to retrive credentials from kv1 and kv2 secret stores, and to authenticate via token.
+What is available here is a sort of MVP of this, with the capability to retrieve credentials from kv1 and kv2 secret stores, and to authenticate via token.
 
 An MSI package is also being built for easy installation, and I am in the process of writing tests to ensure that both the plugin and the installer continue functioning through changes and enhancements.
 
