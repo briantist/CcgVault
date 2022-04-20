@@ -6,6 +6,14 @@
         <Media Id="1" Cabinet="CcgVault.cab" EmbedCab="yes" />
 
         <Directory Id="TARGETDIR" Name="SourceDir">
+            <Component Id="CcgRegistry" Guid="9A8F266A-FDDB-4740-B389-FFF9DC533CDB">
+                <RegistryKey
+                    Root="HKLM"
+                    Key="SYSTEM\CurrentControlSet\Control\CCG\COMClasses\{01BF101D-BFB6-433F-B416-02885CDC5AD3}"
+                    Action="createAndRemoveOnUninstall"
+                    ForceCreateOnInstall="yes"
+                />
+            </Component>
             <Directory Id="ProgramFiles64Folder">
                 <Directory Id="APPLICATIONROOTDIRECTORY" Name="CcgVault">
                     <Component Id="CcgVault.exe" Guid="8A3DDC03-DA64-407A-8B11-7A241DE0564F">
