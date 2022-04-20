@@ -74,6 +74,7 @@ jobs:
           - msi-reinstall
     env:
       INTEGRATION: .\test\integration
+      CCG_BUILD_VER: ${{ env.BUILDVER1 }}
     defaults:
       run:
         shell: pwsh
@@ -154,12 +155,11 @@ jobs:
 
       - name: Test present (upgraded)
         if: endsWith(matrix.mode, 'upgrade')
+        env:
+          CCG_BUILD_VER: ${{ env.BUILDVER2 }}
         run: |
           . .\Initialize-Pester.ps1
-          $c = New-PesterContainer -Path *.Tests.ps1 -Data @{
-              ExpectedVersion = $env:BUILDVER2
-          }
-          Invoke-Pester -Container $c -Tag Present -Output Detailed
+          Invoke-Pester -Tag Present -Output Detailed
 
       - name: Uninstall
         if: endsWith(matrix.mode, 'reinstall')

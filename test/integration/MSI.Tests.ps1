@@ -13,7 +13,7 @@ param(
 
     [Parameter()]
     [System.Version]
-    $ExpectedVersion = $env:BUILDVER1
+    $ExpectedVersion = $env:CCG_BUILD_VER
 )
 
 BeforeAll {
