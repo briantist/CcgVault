@@ -36,6 +36,7 @@
             <ComponentRef Id="CcgVault.exe" />
             <ComponentGroupRef Id="CoGr" />
             <ComponentGroupRef Id="CoComPlus" />
+            <ComponentRef Id="CcgRegistry" />
         </Feature>
 
         <InstallExecuteSequence>
