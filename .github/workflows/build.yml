@@ -130,6 +130,7 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
 
@@ -143,6 +144,7 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Upgrade
@@ -158,6 +160,7 @@ jobs:
               ExpectedVersion = $env:BUILDVER2
           }
           Invoke-Pester -Container $c -Tag Installed -Output Detailed
+          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Uninstall
@@ -170,6 +173,7 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Absent -Output Detailed
+          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Absent -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Absent -Output Detailed
 
       - name: Reinstall
@@ -182,6 +186,7 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
+          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
           Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
 
       - name: Set bin location
