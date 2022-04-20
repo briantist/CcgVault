@@ -12,4 +12,8 @@
         StartMode = 'Manual'
         Executable = 'dllhost.exe'
     }
+
+    Registry = @{
+        Path = 'HKLM:\SYSTEM\CurrentControlSet\Control\CCG\COMClasses'
+    }
 }
