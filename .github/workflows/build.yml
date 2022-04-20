@@ -98,7 +98,6 @@ jobs:
           path: .artifact
 
       - name: Install PowerShell modules
-        if: startsWith(matrix.mode, 'msi')
         uses: potatoqualitee/psmodulecache@v4.5
         with:
           modules-to-cache: MSI:3.3.4
