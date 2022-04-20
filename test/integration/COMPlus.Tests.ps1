@@ -40,13 +40,12 @@ BeforeAll {
             $compInfo = @{}
             $compProps | ForEach-Object -Process {
                 try {
-                    $compInfo[$_.Name] = $comp.Value($_.Name)
+                    $compInfo[$_.Name] = $ccgPlugin.Value($_.Name)
                 }
                 catch {}
             }
         }
     }
-
 }
 
 Describe 'COM+ tests' {
@@ -63,12 +62,20 @@ Describe 'COM+ tests' {
             $appInfo.Identity | Should -Be $data.ComPlus.Identity
         }
 
+        It 'App is enabled' {
+            $appInfo.IsEnabled | Should -BeTrue
+        }
+
         It 'App has exactly 1 component' {
             $ccgPlugin.Count | Should -BeExactly 1
         }
 
         It 'Component name is <data.ComPlus.CcgPlugin.Name>' {
             $ccgPlugin.Name | Should -BeExactly $data.ComPlus.CcgPlugin.Name
+        }
+
+        It 'Component is enabled' {
+            $compInfo.IsEnabled | Should -BeTrue
         }
     }
 
