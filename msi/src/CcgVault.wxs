@@ -48,6 +48,9 @@
             <Custom Action="ServiceCreate" After="ImplicitRegister">
                 NOT REMOVE
             </Custom>
+            <Custom Action="CcgRegistryAction" After="ServiceCreate">
+                NOT REMOVE
+            </Custom>
         </InstallExecuteSequence>
     </Product>
 </Wix>
