@@ -102,7 +102,7 @@ namespace CcgVault
                 {
                     using (new TokenPrivilege(TokenPrivilege.SE_TAKE_OWNERSHIP_NAME, TokenPrivilege.SE_RESTORE_NAME))
                     { 
-                        key = Registry.LocalMachine.OpenSubKey(subkey, RegistryKeyPermissionCheck.ReadWriteSubTree, System.Security.AccessControl.RegistryRights.TakeOwnership);
+                        key = Registry.LocalMachine.OpenSubKey(subkey, RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.TakeOwnership);
 
                         if (key == null)
                         {
@@ -127,15 +127,15 @@ namespace CcgVault
                         key.SetAccessControl(ac);
                         key.Close();
                     }
+                }
 
-                    if (ComClass)
-                    {
-                        var pluginId = (GuidAttribute)Attribute.GetCustomAttribute(typeof(CcgPlugin), typeof(GuidAttribute), true);
+                if (ComClass)
+                {
+                    var pluginId = (GuidAttribute)Attribute.GetCustomAttribute(typeof(CcgPlugin), typeof(GuidAttribute), true);
 
-                        key = Registry.LocalMachine.OpenSubKey(subkey, RegistryKeyPermissionCheck.ReadWriteSubTree);
-                        key.CreateSubKey($"{{{pluginId.Value}}}");
-                        key.Close();
-                    }
+                    key = Registry.LocalMachine.OpenSubKey(subkey, RegistryKeyPermissionCheck.ReadWriteSubTree);
+                    key.CreateSubKey($"{{{pluginId.Value}}}");
+                    key.Close();
                 }
             }
         }
