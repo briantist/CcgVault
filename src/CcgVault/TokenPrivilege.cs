@@ -34,7 +34,7 @@ namespace CcgVault
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         internal struct TokPriv1Luid
         {
-            public int Count;
+            public readonly int Count;
             public long Luid;
             public int Attr;
 
