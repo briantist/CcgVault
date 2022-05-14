@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace CcgVault
@@ -33,12 +34,13 @@ namespace CcgVault
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         internal struct TokPriv1Luid
         {
-            public const int Count = 1;
+            public int Count;
             public long Luid;
             public int Attr;
 
             public TokPriv1Luid(string privilege, int attributes = SE_PRIVILEGE_ENABLED)
             {
+                Count = 1;
                 Attr = attributes;
                 Luid = 0;
                 LookupPrivilegeValue(null, privilege, ref Luid);
@@ -94,18 +96,22 @@ namespace CcgVault
         {
             privsToDisable = new Stack<TokPriv1Luid>(privileges.Length);
 
-            OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref hToken);
+            bool success = OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, ref hToken);
+            int e = Marshal.GetLastWin32Error();
+            Debug.WriteLine($"Open token [{success} ({e})]");
+
             foreach (string privilege in privileges)
             {
                 var tokenPrivilege = new TokPriv1Luid(privilege);
-                bool success = AdjustTokenPrivileges(hToken, false, ref tokenPrivilege, 0, IntPtr.Zero, IntPtr.Zero);
+                success = AdjustTokenPrivileges(hToken, false, ref tokenPrivilege, 0, IntPtr.Zero, IntPtr.Zero);
+                e = Marshal.GetLastWin32Error();
                 if (success)
                 {
                     privsToDisable.Push(tokenPrivilege);
+                    Debug.WriteLine($"Added {privilege} ({e}).\nTokPriv: {tokenPrivilege}");                    
                 }
                 else
                 {
-                    int e = Marshal.GetLastWin32Error();
                     string msg = $"Error adjusting token privilege '{privilege}'.";
                     var ex = new Win32Exception(e);
                     throw new InvalidOperationException(msg, ex);
