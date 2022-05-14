@@ -41,7 +41,7 @@
                         FileKey="CcgVault.exe"
                         Execute="commit"
                         Impersonate="no"
-                        ExeCommand="[CcgVault.exe] registry --permissions --comclass"
+                        ExeCommand="[CcgVault.exe] registry --permission --comclass"
                         Return="check"
          />
     </Fragment>
