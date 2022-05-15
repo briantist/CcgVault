@@ -48,7 +48,7 @@ BeforeAll {
     }
 }
 
-Describe 'COM+ tests' {
+Describe 'COM+ tests' -Tag ComPlus {
     Context 'Present' -Tag Present {
         It 'There is exactly 1 app' {
             $app.Count | Should -BeExactly 1
