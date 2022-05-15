@@ -133,7 +133,7 @@ jobs:
         run: |
           New-Item -Path C:\ccg -ItemType Directory -Force
           Copy-Item -LiteralPath .config/ccgvault.yml -Destination C:\ccg
-          $env:VAULT_DEV_ROOT_TOKEN_ID | Set-Content -LiteralPath C:\ccg\toeknfile -NoNewline -Encoding utf8NoBOM
+          $env:VAULT_DEV_ROOT_TOKEN_ID | Set-Content -LiteralPath C:\ccg\tokenfile -NoNewline -Encoding utf8NoBOM
 
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
