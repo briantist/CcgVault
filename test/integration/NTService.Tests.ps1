@@ -18,7 +18,7 @@ BeforeAll {
     )
 }
 
-Describe 'Service tests' {
+Describe 'Service tests' -Tag NtService {
     Context 'Present' -Tag Present {
         It 'Service "<ServiceName>" exists' {
             $service | Should -Not -BeNullOrEmpty

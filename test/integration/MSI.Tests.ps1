@@ -27,7 +27,7 @@ BeforeAll {
     }
 }
 
-Describe 'MSI tests' {
+Describe 'MSI tests' -Tag Msi {
     Context 'Present' -Tag Present {
         It '<Name> is installed' {
             $msi | Should -Not -BeNullOrEmpty

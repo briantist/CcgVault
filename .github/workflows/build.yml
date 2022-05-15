@@ -199,8 +199,51 @@ jobs:
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe --help
 
-      - name: Set reg
+      - name: Set registry entry
         if: matrix.mode == 'bin'
         shell: cmd
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe registry --permission --comclass
+
+      - name: Test registry present
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag Registry -Output Detailed
+
+      - name: Create COM+ app
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe ping
+
+      - name: Test COM+ present
+        if: matrix.mode == 'bin'
+        env:
+          COMPLUS_IDENTITY: Interactive User
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag ComPlus -Output Detailed
+
+      - name: Create NT Service for COM+ app
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe service --install
+
+      - name: Test NT Service present and COM+ Identity
+        if: matrix.mode == 'bin'
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag NtService,ComPlus -Output Detailed
+
+      - name: Remove NT Service
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe service --uninstall
+
+      - name: Test NT Service absent
+        if: matrix.mode == 'bin'
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Present -Tag NtService -Output Detailed
