@@ -75,6 +75,8 @@ jobs:
           - msi-reinstall
     env:
       INTEGRATION: .\test\integration
+      VAULT_ADDR: http://127.0.0.1:8200
+      VAULT_DEV_ROOT_TOKEN_ID: 323e3e66-e5fe-42ba-a4b9-fad293077754
     defaults:
       run:
         shell: pwsh
@@ -122,6 +124,16 @@ jobs:
           & $vault version
 
           echo "VAULT=$vault" >> $env:GITHUB_ENV
+
+      - name: Setup Vault
+        run: |
+          .vault\setup.ps1 -VaultPath $env:VAULT
+
+      - name: Setup Configs
+        run: |
+          New-Item -Path C:\ccg -ItemType Directory -Force
+          Copy-Item -LiteralPath .config/ccgvault.yml -Destination C:\ccg
+          $env:VAULT_DEV_ROOT_TOKEN_ID | Set-Content -LiteralPath C:\ccg\toeknfile -NoNewline -Encoding utf8NoBOM
 
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
@@ -266,3 +278,8 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -ExcludeTagFilter Present -Tag NtService -Output Detailed
+
+      - name: Testy
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe test --input "C:\ccg\ccgvault.yml|static_kv1"
