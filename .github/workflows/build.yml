@@ -107,7 +107,7 @@ jobs:
       - name: Download Vault
         run: |
           $outpath = Join-Path -Path '.vault' -ChildPath 'bin'
-          New-Item -Path $outpath -ItemType Directory -Force
+          $null = New-Item -Path $outpath -ItemType Directory -Force
 
           $w = Invoke-WebRequest -Uri https://www.vaultproject.io/downloads
           $dl = $w.Links.href.Where({$_-match'\d+\.\d+\.\d+_windows_amd64.zip$'})[0] -as [uri]
@@ -117,7 +117,11 @@ jobs:
           Invoke-WebRequest -Uri $dl -OutFile $outfile
           Expand-Archive -LiteralPath $outfile -DestinationPath $outpath
 
-          & $outpath\vault.exe version
+          $vault = Join-Path -Path $outpath -ChildPath 'vault.exe' -Resolve
+
+          & $vault version
+
+          echo "VAULT=$vault" >> $env:GITHUB_ENV
 
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
