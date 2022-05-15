@@ -226,6 +226,8 @@ jobs:
         run: CcgVault.exe ping
 
       - name: Test COM+ present
+        env:
+          COMPLUS_IDENTITY: Interactive User
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -ExcludeTagFilter Absent -Tag ComPlus -Output Detailed
@@ -235,10 +237,10 @@ jobs:
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe service --install
 
-      - name: Test NT Service present
+      - name: Test NT Service present and COM+ Identity
         run: |
           . .\Initialize-Pester.ps1
-          Invoke-Pester -ExcludeTagFilter Absent -Tag NtService -Output Detailed
+          Invoke-Pester -ExcludeTagFilter Absent -Tag NtService,ComPlus -Output Detailed
 
       - name: Remove NT Service
         shell: cmd

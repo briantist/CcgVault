@@ -1,7 +1,19 @@
 #Requires -Module @{ ModuleName = 'Pester'; ModuleVersion = '5.2.0' }
 
+param(
+    [Parameter()]
+    [ValidateNotNull()]
+    [AllowEmptyString()]
+    [String]
+    $Identity = $env:COMPLUS_IDENTITY
+)
+
 BeforeAll {
     $data = Import-PowerShellDataFile -LiteralPath $PSScriptRoot\TestData.psd1
+
+    if (-not $Identity) {
+        $Identity = $data.ComPlus.Identity
+    }
 
     $appId = [Guid]::Parse($data.ComPlus.ApplicationID)
     $ccgPluginId = [Guid]::Parse($data.ComPlus.CcgPlugin.ID)
@@ -59,7 +71,7 @@ Describe 'COM+ tests' -Tag ComPlus {
         }
 
         It 'App identity is <data.ComPlus.Identity>' {
-            $appInfo.Identity | Should -Be $data.ComPlus.Identity
+            $appInfo.Identity | Should -Be $Identity
         }
 
         It 'App is enabled' {
