@@ -7,19 +7,20 @@ param(
     $VaultPath = 'vault.exe',
 
     [Parameter()]
-    [ValidateNotNullOrEmpty()]
-    [String]
-    $CcgUser = 'ccg-reader' ,
+    [hashtable]
+    $Kv1Data = @{
+        Username = 'ccg-reader-1'
+        Domain = 'contoso.com'
+        Password = 'password1'
+    } ,
 
     [Parameter()]
-    [ValidateNotNullOrEmpty()]
-    [String]
-    $CcgPass = 'password1' ,
-
-    [Parameter()]
-    [ValidateNotNullOrEmpty()]
-    [String]
-    $CcgDomain = 'contoso.com'
+    [hashtable]
+    $Kv2Data = @{
+        Username = 'ccg-reader-2'
+        Domain = 'contoso.com'
+        Password = 'password2'
+    }
 )
 
 if (-not $env:VAULT_ADDR) {
@@ -43,7 +44,6 @@ if ($running) {
     return
 }
 
-# & $VaultPath server -dev &
 $w32p = Get-CimClass -ClassName Win32_Process
 $w32startup = Get-CimClass -ClassName Win32_ProcessStartup
 $vars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Process).GetEnumerator().ForEach({
@@ -58,5 +58,5 @@ $proc = Invoke-CimMethod -CiMClass $w32p -Name Create -Arguments @{
 $proc.ProcessId | Set-Content -LiteralPath $env:TMP\vaultpid -NoNewline -Encoding utf8NoBOM
 
 & $VaultPath secrets enable -path kv -version 1 kv
-& $VaultPath kv put kv/win/gmsa-getter Username=$CcgUser Password=$CcgPass Domain=$CcgDomain
-& $VaultPath kv put secret/win/gmsa-getter Username=$CcgUser Password=$CcgPass Domain=$CcgDomain
+& $VaultPath kv put kv/win/gmsa-getter $($Kv1Data.GetEnumerator().ForEach({"{0}={1}" -f $_.Name, $_.Value}))
+& $VaultPath kv put secret/win/gmsa-getter $($Kv2Data.GetEnumerator().ForEach({"{0}={1}" -f $_.Name, $_.Value}))
