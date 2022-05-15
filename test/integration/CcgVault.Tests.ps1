@@ -4,12 +4,12 @@ param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [String]
-    $CcgVault = 'C:\Program Files\CcgVault\CcgVault.exe' ,
+    $CcgVault = "$env:CcgVaultBin\CcgVault.exe" ,
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [String]
-    $Config = 'C:\ccg\test.yml'
+    $Config = 'C:\ccg\ccgvault.yml'
 )
 
 BeforeAll {
