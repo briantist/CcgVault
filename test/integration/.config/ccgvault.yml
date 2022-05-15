@@ -1,0 +1,18 @@
+---
+defaults:
+  vault_addr: http://127.0.0.1:8200
+  auth:
+    type: token_from_file
+    config:
+      file_path: C:\ccg\tokenfile
+sources:
+  static_kv1:
+    type: kv1
+    config:
+      path: win/gmsa-getter
+      # mount_point: kv
+  static_kv2:
+    type: kv2
+    config:
+      path: win/gmsa-getter
+      mount_point: secret
