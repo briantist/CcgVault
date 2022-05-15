@@ -194,13 +194,58 @@ jobs:
           }
           echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
 
+      - name: Uninstall
+        if: startsWith(matrix.mode, 'msi')
+        run: |
+          & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test absent (uninstall)
+        if: startsWith(matrix.mode, 'msi')
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Absent -Output Detailed
+
       - name: Run simple help
         shell: cmd
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe --help
 
-      - name: Set reg
-        if: matrix.mode == 'bin'
+      - name: Set registry entry
         shell: cmd
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe registry --permission --comclass
+
+      - name: Test registry present
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag Registry -Output Detailed
+
+      - name: Create COM+ app
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe ping
+
+      - name: Test COM+ present
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag ComPlus -Output Detailed
+
+      - name: Create NT Service for COM+ app
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe service --install
+
+      - name: Test NT Service present
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag NtService -Output Detailed
+
+      - name: Remove NT Service
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe service --uninstall
+
+      - name: Test NT Service absent
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Present -Tag NtService -Output Detailed
