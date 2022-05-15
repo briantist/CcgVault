@@ -13,7 +13,7 @@ param(
 
     [Parameter()]
     [System.Version]
-    $ExpectedVersion = $env:BUILDVER1
+    $ExpectedVersion = $env:CCG_BUILD_VER
 )
 
 BeforeAll {
@@ -28,7 +28,7 @@ BeforeAll {
 }
 
 Describe 'MSI tests' {
-    Context 'Installed' -Tag Installed {
+    Context 'Present' -Tag Present {
         It '<Name> is installed' {
             $msi | Should -Not -BeNullOrEmpty
         }

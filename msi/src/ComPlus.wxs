@@ -33,6 +33,17 @@
                         ExeCommand="[CcgVault.exe] service --install"
                         Return="check"
         />
+        <!--
+            Microsoft Installer will not modify registry keys owned by TrustedInstaller
+            so we need a custom action to do this.
+         -->
+         <CustomAction  Id="CcgRegistryAction"
+                        FileKey="CcgVault.exe"
+                        Execute="commit"
+                        Impersonate="no"
+                        ExeCommand="[CcgVault.exe] registry --permission --comclass"
+                        Return="check"
+         />
     </Fragment>
     <Fragment>
         <ComponentGroup Id="CoComPlus">

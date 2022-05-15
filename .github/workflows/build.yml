@@ -10,6 +10,7 @@ on:
 env:
   SOLUTION: src\CcgVault.sln
   RELEASE: src\CcgVault\bin\Release
+  CCG_BUILD_VER: 0.0.99
   BUILDVER1: 0.0.99
   BUILDVER2: 0.0.100
 
@@ -98,7 +99,6 @@ jobs:
           path: .artifact
 
       - name: Install PowerShell modules
-        if: startsWith(matrix.mode, 'msi')
         uses: potatoqualitee/psmodulecache@v4.5
         with:
           modules-to-cache: MSI:3.3.4
@@ -120,18 +120,21 @@ jobs:
               echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
           }
 
+      - name: Test absent (pre-run)
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Absent -Output Detailed
+
       - name: Install from MSI
         if: startsWith(matrix.mode, 'msi')
         run: |
           & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
-      - name: Test present
+      - name: Test present (install)
         if: startsWith(matrix.mode, 'msi')
         run: |
           . .\Initialize-Pester.ps1
-          Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
-          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
-          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
+          Invoke-Pester -Tag Present -Output Detailed
 
 
       - name: Upgrade self (install same version)
@@ -143,9 +146,7 @@ jobs:
         if: endsWith(matrix.mode, 'upgrade-self')
         run: |
           . .\Initialize-Pester.ps1
-          Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
-          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
-          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
+          Invoke-Pester -Tag Present -Output Detailed
 
       - name: Upgrade
         if: endsWith(matrix.mode, 'upgrade')
@@ -154,27 +155,22 @@ jobs:
 
       - name: Test present (upgraded)
         if: endsWith(matrix.mode, 'upgrade')
+        env:
+          CCG_BUILD_VER: ${{ env.BUILDVER2 }}
         run: |
           . .\Initialize-Pester.ps1
-          $c = New-PesterContainer -Path MSI.Tests.ps1 -Data @{
-              ExpectedVersion = $env:BUILDVER2
-          }
-          Invoke-Pester -Container $c -Tag Installed -Output Detailed
-          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
-          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
+          Invoke-Pester -Tag Present -Output Detailed
 
       - name: Uninstall
         if: endsWith(matrix.mode, 'reinstall')
         run: |
           & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
 
-      - name: Test absent
+      - name: Test absent (uninstall)
         if: endsWith(matrix.mode, 'reinstall')
         run: |
           . .\Initialize-Pester.ps1
-          Invoke-Pester -Path MSI.Tests.ps1 -Tag Absent -Output Detailed
-          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Absent -Output Detailed
-          Invoke-Pester -Path NTService.Tests.ps1 -Tag Absent -Output Detailed
+          Invoke-Pester -Tag Absent -Output Detailed
 
       - name: Reinstall
         if: endsWith(matrix.mode, 'reinstall')
@@ -185,9 +181,7 @@ jobs:
         if: endsWith(matrix.mode, 'reinstall')
         run: |
           . .\Initialize-Pester.ps1
-          Invoke-Pester -Path MSI.Tests.ps1 -Tag Installed -Output Detailed
-          Invoke-Pester -Path COMPlus.Tests.ps1 -Tag Present -Output Detailed
-          Invoke-Pester -Path NTService.Tests.ps1 -Tag Present -Output Detailed
+          Invoke-Pester -Tag Present -Output Detailed
 
       - name: Set bin location
         run: |
@@ -204,3 +198,9 @@ jobs:
         shell: cmd
         working-directory: ${{ env.CcgVaultBin }}
         run: CcgVault.exe --help
+
+      - name: Set reg
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe registry --permission --comclass
