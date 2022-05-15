@@ -16,4 +16,17 @@
     Registry = @{
         Path = 'HKLM:\SYSTEM\CurrentControlSet\Control\CCG\COMClasses'
     }
+
+    CcgVault = @{
+        Kv1Data = @{
+            Username = 'ccg-reader-1'
+            Domain = 'contoso.com'
+            Password = 'password1'
+        }
+        Kv2Data = @{
+            Username = 'ccg-reader-2'
+            Domain = 'contoso.com'
+            Password = 'password2'
+        }
+    }
 }
