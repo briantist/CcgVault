@@ -106,7 +106,7 @@ jobs:
 
       - name: Download Vault
         run: |
-          $outpath = Join-Path -Path '.vault' -ChildPath 'bin' -Resolve
+          $outpath = Join-Path -Path '.vault' -ChildPath 'bin'
           New-Item -Path $outpath -ItemType Directory -Force
 
           $w = Invoke-WebRequest -Uri https://www.vaultproject.io/downloads
