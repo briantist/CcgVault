@@ -43,7 +43,19 @@ if ($running) {
     return
 }
 
-& $VaultPath server -dev &
+# & $VaultPath server -dev &
+$w32p = Get-CimClass -ClassName Win32_Process
+$w32startup = Get-CimClass -ClassName Win32_ProcessStartup
+$vars = [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Process).GetEnumerator().ForEach({
+    "{0}={1}" -f $_.Name, $_.Value
+}) -as [string[]]
+$vars | Write-Verbose
+$startup = New-CimInstance -CiMClass $w32startup -Property @{ EnvironmentVariables = $vars } -ClientOnly
+$proc = Invoke-CimMethod -CiMClass $w32p -Name Create -Arguments @{
+    CommandLine = "$VaultPath server -dev"
+    ProcessStartupInformation = $startup
+}
+$proc.ProcessId | Set-Content -LiteralPath $env:TMP\vaultpid -NoNewline -Encoding utf8NoBOM
 
 & $VaultPath secrets enable -path kv -version 1 kv
 & $VaultPath kv put kv/win/gmsa-getter Username=$CcgUser Password=$CcgPass Domain=$CcgDomain
