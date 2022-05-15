@@ -237,6 +237,7 @@ jobs:
         run: CcgVault.exe registry --permission --comclass
 
       - name: Test registry present
+        if: matrix.mode == 'bin'
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -ExcludeTagFilter Absent -Tag Registry -Output Detailed
