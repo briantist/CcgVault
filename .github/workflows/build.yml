@@ -83,6 +83,8 @@ jobs:
         shell: pwsh
         working-directory: ${{ env.INTEGRATION }}
     steps:
+      - name: Try reducing Pester startup time
+        run: Import-Module -Name Pester -MinimumVersion
       - uses: actions/checkout@v3
 
       # https://github.com/beatcracker/Powershell-Misc
@@ -287,3 +289,16 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Tag CcgVault -Output Detailed
+
+      - name: Log dump
+        if: always()
+        run: |
+          Get-WinEvent -LogName Microsoft-Windows-Containers-CCG/Admin -OutVariable d
+          Export-CliXml -InputObject $d -LiteralPath C:\ccg\d.xml -Depth 10 -Force
+
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          path: C:\ccg\d.xml
+          name: events
