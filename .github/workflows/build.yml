@@ -296,6 +296,8 @@ jobs:
 
           docker ps
 
+          docker run --user "NT AUthority\System" --security-opt "credentialspec=file://credspec.json" --name ccgtest --rm -d $env:CcgVaultTestContainer cmd /c ping localhost
+
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v3
