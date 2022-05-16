@@ -24,7 +24,7 @@
         "HostAccountConfig": {
             "PortableCcgVersion": "1",
             "PluginGUID": "{01BF101D-BFB6-433F-B416-02885CDC5AD3}",
-            "PluginInput": "C:\\ccg\\test.yml|static_kv2"
+            "PluginInput": "C:\\ccg\\ccgvault.yml|static_kv2"
         }
     }
 }

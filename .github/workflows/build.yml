@@ -135,6 +135,8 @@ jobs:
           Copy-Item -LiteralPath .config/ccgvault.yml -Destination C:\ccg
           $env:VAULT_DEV_ROOT_TOKEN_ID | Set-Content -LiteralPath C:\ccg\tokenfile -NoNewline -Encoding utf8NoBOM
 
+          Copy-Item -LiteralPath .config/credspec.json -Destination "$env:ProgramData\Docker\credentialspecs" -Force
+
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
         run: |
