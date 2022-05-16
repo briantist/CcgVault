@@ -115,7 +115,6 @@ Describe 'CcgVault tests' -Tag CcgVault {
                         }
                         $ev = Get-WinEvent -LogName $LogName -FilterXPath "*[System[EventID=${EventID}]]" -MaxEvents 1 -ErrorAction SilentlyContinue
                         $delay = $delay -or $SleepMilliseconds -as [bool]
-                        # Write-Verbose -Verbose "$EventId [min: $MinimumDateTime + $($ev | % TimeCreated)] [$(($null -eq $MinimumDateTime -or $ev.TimeCreated -gt $MinimumDateTime))] [$(($null -eq $ev -or $null -eq $Condition -or (ForEach-Object -InputObject $ev -Process $Condition)))] [$((-not $TimeoutSeconds -or ($timedOut = ([DateTime]::Now - $timeoutStart).TotalSeconds -gt $TimeoutSeconds)))] [$timedOut]"
                     } until (
                         ($null -eq $MinimumDateTime -or $ev.TimeCreated -gt $MinimumDateTime) -and
                         ($null -eq $Condition -or (ForEach-Object -InputObject $ev -Process $Condition)) -or
@@ -137,13 +136,19 @@ Describe 'CcgVault tests' -Tag CcgVault {
             $event1 | Should -Not -BeNullOrEmpty
         }
 
-        It "The credential fails without a real domain" -Tag NoDomain {
-            $event8 = Wait-WinEvent -LogName $logname -EventId 8 -Condition {
-                [guid]::Parse($_.Properties[1].Value) -eq $ccgPluginId
-            } -MinimumDateTime $time -TimeoutSeconds $timeout
+        # EventID 8 gets logged on my local machine when used with test creds
+        # and the contoso.com domain, but it doesn't happen in CI nor in a test
+        # server; maybe this is because my machine is a desktop OS, maybe it's
+        # because it's domain-joined, not sure. Will keep it around as a possible
+        # future test-case.
+        #
+        # It "The credential fails without a real domain" -Tag NoDomain {
+        #     $event8 = Wait-WinEvent -LogName $logname -EventId 8 -Condition {
+        #         [guid]::Parse($_.Properties[1].Value) -eq $ccgPluginId
+        #     } -MinimumDateTime $time -TimeoutSeconds $timeout
 
-            $event8 | Should -Not -BeNullOrEmpty
-        }
+        #     $event8 | Should -Not -BeNullOrEmpty
+        # }
 
         AfterAll {
             & docker stop ccgtest

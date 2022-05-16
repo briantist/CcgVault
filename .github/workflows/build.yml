@@ -287,20 +287,3 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Tag CcgVault -Output Detailed
-
-      - name: Log dump
-        if: always()
-        run: |
-          docker ps
-          docker run --user "NT AUthority\System" --security-opt "credentialspec=file://credspec.json" --name ccgtest --rm $env:CcgVaultTestContainer cmd /c ping -n 100 localhost
-
-          Get-WinEvent -LogName Microsoft-Windows-Containers-CCG/Admin -OutVariable d
-          Export-CliXml -InputObject $d -LiteralPath C:\ccg\d.xml -Depth 10 -Force
-
-      - name: Upload
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          path: C:\ccg\d.xml
-          name: events
-          retention-days: 1
