@@ -280,12 +280,7 @@ jobs:
           . .\Initialize-Pester.ps1
           Invoke-Pester -ExcludeTagFilter Present -Tag NtService -Output Detailed
 
-      - name: Test via CLI test
+      - name: Test CcgVault end-to-end
         run: |
           . .\Initialize-Pester.ps1
-          Invoke-Pester -Tag CcgVault,CLI -Output Detailed
-
-      # - name: Test via CLI test
-      #   shell: cmd
-      #   working-directory: ${{ env.CcgVaultBin }}
-      #   run: CcgVault.exe test --input "C:\ccg\ccgvault.yml|static_kv1"
+          Invoke-Pester -Tag CcgVault -Output Detailed
