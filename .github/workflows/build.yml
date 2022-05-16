@@ -77,6 +77,7 @@ jobs:
       INTEGRATION: .\test\integration
       VAULT_ADDR: http://127.0.0.1:8200
       VAULT_DEV_ROOT_TOKEN_ID: 323e3e66-e5fe-42ba-a4b9-fad293077754
+      CcgVaultTestContainer: mcr.microsoft.com/windows/nanoserver:${{ endsWith(matrix.os, '2019') && '1809' || 'ltsc2022' }}
     defaults:
       run:
         shell: pwsh
