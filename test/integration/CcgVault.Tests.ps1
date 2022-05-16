@@ -9,11 +9,18 @@ param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [String]
-    $Config = 'C:\ccg\ccgvault.yml'
+    $Config = 'C:\ccg\ccgvault.yml' ,
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [String]
+    $ContainerImage = $env:CcgVaultTestContainer
 )
 
 BeforeAll {
     $data = Import-PowerShellDataFile -LiteralPath $PSScriptRoot\TestData.psd1
+
+    $Script:ccgPluginId = [Guid]::Parse($data.ComPlus.CcgPlugin.ID)
 
     $kv1data = $data.CcgVault.Kv1Data
     $kv2data = $data.CcgVault.Kv2Data
@@ -55,6 +62,91 @@ Describe 'CcgVault tests' -Tag CcgVault {
 
         It "Source '<source>' has Password '<expected.Password>'" {
             $result.Pass | Should -BeExactly $expected.Password
+        }
+    }
+
+    Context 'Docker run test' -Tag Docker {
+        BeforeAll {
+            $Script:timeout = 20
+            $Script:time = Get-Date
+            $Script:logname = $data.CcgVault.LogName
+
+            & docker run --user "NT AUthority\System" --security-opt "credentialspec=file://credspec.json" --name ccgtest --rm -d $ContainerImage cmd /c ping -t localhost
+
+            if (-not $?) {
+                throw "Error runnung docker command."
+            }
+
+            function Wait-WinEvent {
+                [CmdletBinding()]
+                param(
+                    [Parameter(Mandatory)]
+                    [ValidateNotNullOrEmpty()]
+                    [String]
+                    $LogName ,
+
+                    [Parameter()]
+                    [UInt16]
+                    $EventID ,
+
+                    [Parameter()]
+                    [ScriptBlock]
+                    $Condition ,
+
+                    [Parameter()]
+                    [DateTime]
+                    $MinimumDateTime ,
+
+                    [Parameter()]
+                    [UInt16]
+                    $TimeoutSeconds ,
+
+                    [Parameter()]
+                    [UInt16]
+                    $SleepMilliseconds = 250
+                )
+
+                End {
+                    $delay = $false
+                    $timeoutStart = [DateTime]::Now
+                    do {
+                        if ($delay) {
+                            Start-Sleep -Milliseconds $SleepMilliseconds
+                        }
+                        $ev = Get-WinEvent -LogName $LogName -FilterXPath "*[System[EventID=${EventID}]]" -MaxEvents 1 -ErrorAction SilentlyContinue
+                        $delay = $delay -or $SleepMilliseconds -as [bool]
+                        # Write-Verbose -Verbose "$EventId [min: $MinimumDateTime + $($ev | % TimeCreated)] [$(($null -eq $MinimumDateTime -or $ev.TimeCreated -gt $MinimumDateTime))] [$(($null -eq $ev -or $null -eq $Condition -or (ForEach-Object -InputObject $ev -Process $Condition)))] [$((-not $TimeoutSeconds -or ($timedOut = ([DateTime]::Now - $timeoutStart).TotalSeconds -gt $TimeoutSeconds)))] [$timedOut]"
+                    } until (
+                        ($null -eq $MinimumDateTime -or $ev.TimeCreated -gt $MinimumDateTime) -and
+                        ($null -eq $Condition -or (ForEach-Object -InputObject $ev -Process $Condition)) -or
+                        (-not $TimeoutSeconds -or ($timedOut = ([DateTime]::Now - $timeoutStart).TotalSeconds -gt $TimeoutSeconds))
+                    )
+
+                    if (-not $timedOut) {
+                        $ev
+                    }
+                }
+            }
+        }
+
+        It "The plugin was instantiated" {
+            $event1 = Wait-WinEvent -LogName $logname -EventId 1 -Condition {
+                [guid]::Parse($_.Properties[0].Value) -eq $ccgPluginId
+            } -MinimumDateTime $time -TimeoutSeconds $timeout
+
+            $event1 | Should -Not -BeNullOrEmpty
+        }
+
+        It "The credential fails without a real domain" -Tag NoDomain {
+            $event8 = Wait-WinEvent -LogName $logname -EventId 8 -Condition {
+                [guid]::Parse($_.Properties[1].Value) -eq $ccgPluginId
+            } -MinimumDateTime $time -TimeoutSeconds $timeout
+
+            $event8 | Should -Not -BeNullOrEmpty
+        }
+
+        AfterAll {
+            & docker stop ccgtest
         }
     }
 }

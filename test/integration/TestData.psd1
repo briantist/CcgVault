@@ -18,6 +18,7 @@
     }
 
     CcgVault = @{
+        LogName = 'Microsoft-Windows-Containers-CCG/Admin'
         Kv1Data = @{
             Username = 'ccg-reader-1'
             Domain = 'contoso.com'
