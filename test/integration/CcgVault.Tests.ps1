@@ -1,5 +1,5 @@
 #Requires -Module @{ ModuleName = 'Pester'; ModuleVersion = '5.2.0' }
-
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredSpecPath')]
 param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
@@ -14,7 +14,12 @@ param(
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [String]
-    $ContainerImage = $env:CcgVaultTestContainer
+    $ContainerImage = $env:CcgVaultTestContainer,
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [String]
+    $CredSpecPath = "$env:ProgramData\Docker\credentialspecs"
 )
 
 BeforeAll {
@@ -65,13 +70,26 @@ Describe 'CcgVault tests' -Tag CcgVault {
         }
     }
 
-    Context 'Docker run test' -Tag Docker {
+    Context 'Docker run test w/ source: <source>' -Tag Docker -Foreach @(
+        @{ source = 'static_kv1' }
+        @{ source = 'static_kv2' }
+    ) {
         BeforeAll {
             $Script:timeout = 60
             $Script:time = Get-Date
             $Script:logname = $data.CcgVault.LogName
 
-            & docker run --user "NT AUthority\System" --security-opt "credentialspec=file://credspec.json" --name ccgtest --rm -d $ContainerImage cmd /c ping -t localhost
+            $credspecfile = "credspec_${source}.json"
+            $credspec = Join-Path -Path $CredSpecPath -ChildPath $credspecfile
+
+            $spec = Get-Content -LiteralPath "$PSScriptRoot/.config/credspec.json" -Raw | ConvertFrom-Json -AsHashtable -Depth 10
+            $spec.ActiveDirectoryConfig.HostAccountConfig.PluginInput = "${Config}|${source}"
+
+            ConvertTo-Json -InputObject $spec -Depth 10 | Set-Content -LiteralPath $credspec -Encoding utf8NoBOM -Force
+
+            $containerName = "ccgtest_${source}"
+
+            & docker run --user "NT AUthority\System" --security-opt "credentialspec=file://${credspecfile}" --name "$containerName" --rm -d "$ContainerImage" cmd /c ping -t localhost
 
             if (-not $?) {
                 throw "Error runnung docker command."
@@ -151,7 +169,8 @@ Describe 'CcgVault tests' -Tag CcgVault {
         # }
 
         AfterAll {
-            & docker stop ccgtest
+            & docker stop "$containerName"
+            Remove-Item -LiteralPath $credspec -Force
         }
     }
 }
