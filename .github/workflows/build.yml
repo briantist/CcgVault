@@ -294,9 +294,12 @@ jobs:
           Get-WinEvent -LogName Microsoft-Windows-Containers-CCG/Admin -OutVariable d
           Export-CliXml -InputObject $d -LiteralPath C:\ccg\d.xml -Depth 10 -Force
 
+          docker ps
+
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v3
         with:
           path: C:\ccg\d.xml
           name: events
+          retention-days: 1
