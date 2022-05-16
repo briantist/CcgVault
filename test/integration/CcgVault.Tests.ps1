@@ -67,7 +67,7 @@ Describe 'CcgVault tests' -Tag CcgVault {
 
     Context 'Docker run test' -Tag Docker {
         BeforeAll {
-            $Script:timeout = 20
+            $Script:timeout = 60
             $Script:time = Get-Date
             $Script:logname = $data.CcgVault.LogName
 
