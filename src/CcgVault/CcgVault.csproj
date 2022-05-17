@@ -82,6 +82,11 @@
   <ItemGroup>
     <Compile Include="AuthType.cs" />
     <Compile Include="CcgPlugin.cs" />
+    <Compile Include="CLI\CliCommandPing.cs" />
+    <Compile Include="CLI\CliCommandRegistry.cs" />
+    <Compile Include="CLI\CliCommandService.cs" />
+    <Compile Include="CLI\CliCommandTest.cs" />
+    <Compile Include="CLI\ICliCommand.cs" />
     <Compile Include="TokenPrivilege.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="BackendType.cs" />
