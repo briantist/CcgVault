@@ -16,4 +16,18 @@
     Registry = @{
         Path = 'HKLM:\SYSTEM\CurrentControlSet\Control\CCG\COMClasses'
     }
+
+    CcgVault = @{
+        LogName = 'Microsoft-Windows-Containers-CCG/Admin'
+        Kv1Data = @{
+            Username = 'ccg-reader-1'
+            Domain = 'contoso.com'
+            Password = 'password1'
+        }
+        Kv2Data = @{
+            Username = 'ccg-reader-2'
+            Domain = 'contoso.com'
+            Password = 'password2'
+        }
+    }
 }

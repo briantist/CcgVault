@@ -1,0 +1,30 @@
+{
+    "CmsPlugins": [
+        "ActiveDirectory"
+    ],
+    "DomainJoinConfig": {
+        "Sid": "S-1-5-21-702590844-1001920913-2680819671",
+        "MachineAccountName": "ccg-gmsa",
+        "Guid": "56d9b66c-d746-4f87-bd26-26760cfdca2e",
+        "DnsTreeName": "contoso.com",
+        "DnsName": "contoso.com",
+        "NetBiosName": "CONTOSO"
+    },
+    "ActiveDirectoryConfig": {
+        "GroupManagedServiceAccounts": [
+            {
+                "Name": "ccg-gmsa",
+                "Scope": "contoso.com"
+            },
+            {
+                "Name": "ccg-gmsa",
+                "Scope": "CONTOSO"
+            }
+        ],
+        "HostAccountConfig": {
+            "PortableCcgVersion": "1",
+            "PluginGUID": "{01BF101D-BFB6-433F-B416-02885CDC5AD3}",
+            "PluginInput": "C:\\ccg\\ccgvault.yml|static_kv2"
+        }
+    }
+}

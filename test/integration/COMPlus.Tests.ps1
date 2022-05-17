@@ -70,7 +70,7 @@ Describe 'COM+ tests' -Tag ComPlus {
             $app.Name | Should -BeExactly CcgVault
         }
 
-        It 'App identity is <data.ComPlus.Identity>' {
+        It 'App identity is <Identity>' {
             $appInfo.Identity | Should -Be $Identity
         }
 

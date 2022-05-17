@@ -75,6 +75,9 @@ jobs:
           - msi-reinstall
     env:
       INTEGRATION: .\test\integration
+      VAULT_ADDR: http://127.0.0.1:8200
+      VAULT_DEV_ROOT_TOKEN_ID: 323e3e66-e5fe-42ba-a4b9-fad293077754
+      CcgVaultTestContainer: mcr.microsoft.com/windows/nanoserver:${{ endsWith(matrix.os, '2019') && '1809' || 'ltsc2022' }}
     defaults:
       run:
         shell: pwsh
@@ -103,6 +106,38 @@ jobs:
         with:
           modules-to-cache: MSI:3.3.4
           shell: pwsh
+
+      - name: Download Vault
+        run: |
+          $outpath = Join-Path -Path '.vault' -ChildPath 'bin'
+          $null = New-Item -Path $outpath -ItemType Directory -Force
+
+          $w = Invoke-WebRequest -Uri https://www.vaultproject.io/downloads
+          $dl = $w.Links.href.Where({$_-match'\d+\.\d+\.\d+_windows_amd64.zip$'})[0] -as [uri]
+          $file = $dl.Segments[-1]
+          $outfile = Join-Path -Path $outpath -ChildPath $file
+
+          Invoke-WebRequest -Uri $dl -OutFile $outfile
+          Expand-Archive -LiteralPath $outfile -DestinationPath $outpath
+
+          $vault = Join-Path -Path $outpath -ChildPath 'vault.exe' -Resolve
+
+          & $vault version
+
+          echo "VAULT=$vault" >> $env:GITHUB_ENV
+
+      - name: Setup Vault
+        run: |
+          .vault\setup.ps1 -VaultPath $env:VAULT
+
+      - name: Setup Configs
+        run: |
+          New-Item -Path C:\ccg -ItemType Directory -Force
+          Copy-Item -LiteralPath .config/ccgvault.yml -Destination C:\ccg
+          $env:VAULT_DEV_ROOT_TOKEN_ID | Set-Content -LiteralPath C:\ccg\tokenfile -NoNewline -Encoding utf8NoBOM
+
+          # we might need this later but for now this is done within the Pester tests
+          # Copy-Item -LiteralPath .config/credspec.json -Destination "$env:ProgramData\Docker\credentialspecs" -Force
 
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
@@ -206,6 +241,7 @@ jobs:
         run: CcgVault.exe registry --permission --comclass
 
       - name: Test registry present
+        if: matrix.mode == 'bin'
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -ExcludeTagFilter Absent -Tag Registry -Output Detailed
@@ -247,3 +283,8 @@ jobs:
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -ExcludeTagFilter Present -Tag NtService -Output Detailed
+
+      - name: Test CcgVault end-to-end
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag CcgVault -Output Detailed
