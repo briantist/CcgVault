@@ -68,6 +68,7 @@ jobs:
       - name: Retrieve previous version
         uses: robinraju/release-downloader@v1.3
         with:
+          repository: ${{ github.repository }}
           out-file-path: .artifact/msi
           latest: true
           tarBall: false
