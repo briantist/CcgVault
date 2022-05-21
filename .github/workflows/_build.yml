@@ -3,11 +3,20 @@ name: Build & Test
 on:
   workflow_call:
     inputs:
-      build-version:
+      version:
         description: The semver of the release (MSI build).
         required: true
         type: string
-    # outputs:
+    outputs:
+      version:
+        description: The version that was built (same as the input).
+        value: ${{ inputs.version }}
+      artifact-bin:
+        description: The name of the bin artifact.
+        value: ${{ jobs.build.outputs.artifact-bin }}
+      artifact-msi:
+        description: The name of the msi artifact.
+        value: ${{ jobs.build.outputs.artifact-msi }}
 
 env:
   SOLUTION: src\CcgVault.sln
@@ -23,6 +32,9 @@ jobs:
     defaults:
       run:
         shell: cmd
+    outputs:
+      artifact-bin: bin
+      artifact-msi: msi
     steps:
       - uses: actions/checkout@v3
 
@@ -37,11 +49,11 @@ jobs:
       - name: Build Solution
         run: msbuild.exe ${{ env.SOLUTION }} /m /p:platform="Any CPU" /p:configuration="Release"
 
-      - name: Build MSI 1
+      - name: Build MSI
         run: msi\build.cmd %BUILDVER1%
 
-      - name: Build MSI 2
-        run: msi\build.cmd %BUILDVER2% *.wix*
+      # - name: Build MSI 2
+      #   run: msi\build.cmd %BUILDVER2% *.wix*
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v3

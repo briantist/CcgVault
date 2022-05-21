@@ -7,55 +7,19 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  SOLUTION: src\CcgVault.sln
-  RELEASE: src\CcgVault\bin\Release
-  CCG_BUILD_VER: 0.0.99
-  BUILDVER1: 0.0.99
-  BUILDVER2: 0.0.100
+# env:
+#   SOLUTION: src\CcgVault.sln
+#   RELEASE: src\CcgVault\bin\Release
+#   CCG_BUILD_VER: 0.0.99
+#   BUILDVER1: 0.0.99
+#   BUILDVER2: 0.0.100
 
 jobs:
   build:
     name: build
-    runs-on: windows-2019
-    defaults:
-      run:
-        shell: cmd
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          msbuild-architecture: x64
-
-      - name: Restore Packages
-        run: nuget restore ${{ env.SOLUTION }}
-
-      - name: Build Solution
-        run: msbuild.exe ${{ env.SOLUTION }} /m /p:platform="Any CPU" /p:configuration="Release"
-
-      - name: Build MSI 1
-        run: msi\build.cmd %BUILDVER1%
-
-      - name: Build MSI 2
-        run: msi\build.cmd %BUILDVER2% *.wix*
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v3
-        with:
-          if-no-files-found: error
-          retention-days: 1
-          name: bin
-          path: ${{ env.RELEASE }}
-
-      - name: Upload MSI artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          if-no-files-found: error
-          retention-days: 1
-          name: msi
-          path: msi/out/*.msi
+    uses: ./.github/workflows/_build.yml
+    with:
+      version: 98.76.54
 
   test:
     name: test - ${{ matrix.mode }} [${{ matrix.os }}]
@@ -100,6 +64,14 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: .artifact
+
+      - name: Retrieve previous version
+        uses: robinraju/release-downloader@v1.3
+        with:
+          out-file-path: .artifact/msi
+          latest: true
+          tarBall: false
+          zipBall: false
 
       - name: Install PowerShell modules
         uses: potatoqualitee/psmodulecache@v4.5
