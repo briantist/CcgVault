@@ -50,7 +50,7 @@ jobs:
         run: msbuild.exe ${{ env.SOLUTION }} /m /p:platform="Any CPU" /p:configuration="Release"
 
       - name: Build MSI
-        run: msi\build.cmd %BUILDVER1%
+        run: msi\build.cmd ${{ inputs.version }}
 
       # - name: Build MSI 2
       #   run: msi\build.cmd %BUILDVER2% *.wix*

@@ -114,14 +114,23 @@ jobs:
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
         run: |
-          $fName = 'ccgvault_v{0}_x64.msi'
+          $pattern = 'ccgvault_v(?<ver>\d+\.\d+\.\d+)_x64.msi'
+          $msiPath = Join-Path -Path '${{ steps.artifact.outputs.download-path }}' -ChildPath 'msi'
+
+          $installers = Get-ChildItem -LiteralPath $msiPath -File | ForEach-Object -Process {
+              if ($_.Name -notmatch $pattern) {
+                  return
+              }
+              $_ | Add-Member -NotePropertyName Version -NotePropertyValue ($Matches['ver'] -as [version]) -Force -PassThru
+          } | Sort-Object -Property Version
+
+          # $fName = 'ccgvault_v{0}_x64.msi'
 
           for ($i = 1 ; $i -le 2 ; ++$i) {
-              $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
-              $name = $fName -f $v
-              $path = '${{ steps.artifact.outputs.download-path }}' |
-                  Join-Path -ChildPath 'msi' |
-                  Join-Path -ChildPath $name
+              # $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
+              # $name = $fName -f $v
+              $name = $installers[$i]
+              $path = Join-Path -Path $msiPath -ChildPath $name
 
               echo "MSI${i}=$name" >> $env:GITHUB_ENV
               echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
