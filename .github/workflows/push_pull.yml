@@ -71,8 +71,8 @@ jobs:
           repository: ${{ github.repository }}
           out-file-path: ${{ steps.artifact.outputs.download-path }}\msi
           latest: true
-          tarBall: false
-          zipBall: false
+          # tarBall: false
+          # zipBall: false
 
       - name: Install PowerShell modules
         uses: potatoqualitee/psmodulecache@v4.5
@@ -129,9 +129,11 @@ jobs:
 
           $new, $old = $installers
 
-          echo "MSIOLD=$($old.Name)"
-          echo "MSIPATHOLD=$($old.FullName)"
-          echo "MSIVERSIONOLD=$(old.Version)"
+          if ($old) {
+              echo "MSIOLD=$($old.Name)"
+              echo "MSIPATHOLD=$($old.FullName)"
+              echo "MSIVERSIONOLD=$(old.Version)"
+          }
 
           echo "MSI=$($new.Name)"
           echo "MSIPATH=$($new.FullName)"
