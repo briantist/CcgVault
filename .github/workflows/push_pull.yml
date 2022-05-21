@@ -130,16 +130,14 @@ jobs:
 
           $new, $old = $installers
 
-          if ($old) {
-              echo "MSIOLD=$($old.Name)"
-              echo "MSIPATHOLD=$($old.FullName)"
-              echo "MSIVERSIONOLD=$($old.Version)"
-          }
+          echo "MSIOLD=$($old.Name)" >> $env:GITHUB_ENV
+          echo "MSIPATHOLD=$($old.FullName)" >> $env:GITHUB_ENV
+          echo "MSIVERSIONOLD=$($old.Version)" >> $env:GITHUB_ENV
 
-          echo "MSI=$($new.Name)"
-          echo "MSIPATH=$($new.FullName)"
-          echo "MSIVERSION=$($new.Version)"
-          echo "CCG_BUILD_VER=$($new.Version)"
+          echo "MSI=$($new.Name)" >> $env:GITHUB_ENV
+          echo "MSIPATH=$($new.FullName)" >> $env:GITHUB_ENV
+          echo "MSIVERSION=$($new.Version)" >> $env:GITHUB_ENV
+          echo "CCG_BUILD_VER=$($new.Version)" >> $env:GITHUB_ENV
 
           # for ($i = 1 ; $i -le 2 ; ++$i) {
           #     # $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
