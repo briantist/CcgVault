@@ -69,7 +69,7 @@ jobs:
         uses: robinraju/release-downloader@v1.3
         with:
           repository: ${{ github.repository }}
-          out-file-path: .artifact/msi
+          out-file-path: ${{ steps.artifact.outputs.download-path }}/msi
           latest: true
           tarBall: false
           zipBall: false
@@ -118,20 +118,21 @@ jobs:
           $pattern = 'ccgvault_v(?<ver>\d+\.\d+\.\d+)_x64.msi'
           $msiPath = Join-Path -Path '${{ steps.artifact.outputs.download-path }}' -ChildPath 'msi'
 
-          $installers = Get-ChildItem -LiteralPath $msiPath -File | ForEach-Object -Process {
+          Get-ChildItem -LiteralPath $msiPath -File | ForEach-Object -Process {
               if ($_.Name -notmatch $pattern) {
                   return
               }
               $_ | Add-Member -NotePropertyName Version -NotePropertyValue ($Matches['ver'] -as [version]) -Force -PassThru
-          } | Sort-Object -Property Version
+          } | Sort-Object -Property Version -OutVariable installers
 
           # $fName = 'ccgvault_v{0}_x64.msi'
 
           for ($i = 1 ; $i -le 2 ; ++$i) {
               # $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
               # $name = $fName -f $v
-              $name = $installers[$i]
-              $path = Join-Path -Path $msiPath -ChildPath $name
+              $name = $installers[$i].Name
+              $path = $installers[$i].FullName
+              # $path = Join-Path -Path $msiPath -ChildPath $name
 
               echo "MSI${i}=$name" >> $env:GITHUB_ENV
               echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
