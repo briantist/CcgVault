@@ -68,11 +68,12 @@ jobs:
       - name: Retrieve previous version
         uses: robinraju/release-downloader@v1.3
         with:
+          fileName: '*'
           repository: ${{ github.repository }}
-          out-file-path: .artifact\msi
+          out-file-path: ${{ steps.artifact.outputs.download-path }}\msi
           latest: true
-          # tarBall: false
-          # zipBall: false
+          tarBall: false
+          zipBall: false
 
       - name: Install PowerShell modules
         uses: potatoqualitee/psmodulecache@v4.5
