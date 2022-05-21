@@ -69,7 +69,7 @@ jobs:
         uses: robinraju/release-downloader@v1.3
         with:
           repository: ${{ github.repository }}
-          out-file-path: ${{ steps.artifact.outputs.download-path }}\msi
+          out-file-path: .artifact\msi
           latest: true
           # tarBall: false
           # zipBall: false
@@ -132,13 +132,13 @@ jobs:
           if ($old) {
               echo "MSIOLD=$($old.Name)"
               echo "MSIPATHOLD=$($old.FullName)"
-              echo "MSIVERSIONOLD=$(old.Version)"
+              echo "MSIVERSIONOLD=$($old.Version)"
           }
 
           echo "MSI=$($new.Name)"
           echo "MSIPATH=$($new.FullName)"
-          echo "MSIVERSION=$(new.Version)"
-          echo "CCG_BUILD_VER=$(new.Version)"
+          echo "MSIVERSION=$($new.Version)"
+          echo "CCG_BUILD_VER=$($new.Version)"
 
           # for ($i = 1 ; $i -le 2 ; ++$i) {
           #     # $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
