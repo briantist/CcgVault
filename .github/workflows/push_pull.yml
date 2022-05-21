@@ -127,11 +127,11 @@ jobs:
 
           # $fName = 'ccgvault_v{0}_x64.msi'
 
-          for ($i = 0 ; $i -lt 2 ; ++$i) {
+          for ($i = 1 ; $i -le 2 ; ++$i) {
               # $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
               # $name = $fName -f $v
-              $name = $installers[$i].Name
-              $path = $installers[$i].FullName
+              $name = $installers[$i-1].Name
+              $path = $installers[$i-1].FullName
               # $path = Join-Path -Path $msiPath -ChildPath $name
 
               echo "MSI${i}=$name" >> $env:GITHUB_ENV
