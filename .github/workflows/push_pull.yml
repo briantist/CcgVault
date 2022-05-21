@@ -160,7 +160,7 @@ jobs:
       - name: Install from MSI [${{ endsWith(matrix.mode, 'upgrade') && env.MSIVERSIONOLD || env.MSIVERSION }}]
         if: startsWith(matrix.mode, 'msi')
         run: |
-          $p = if ([bool]::Parse('${{ endsWith(matrix.mode, 'upgrade') }}') {
+          $p = if ([bool]::Parse('${{ endsWith(matrix.mode, 'upgrade') }}')) {
               $env:MSIPATHOLD
           }
           else {
