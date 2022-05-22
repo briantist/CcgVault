@@ -1,0 +1,68 @@
+---
+name: Build
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: The semver of the release (MSI build).
+        required: true
+        type: string
+    outputs:
+      version:
+        description: The version that was built (same as the input).
+        value: ${{ inputs.version }}
+      artifact-bin:
+        description: The name of the bin artifact.
+        value: ${{ jobs.build.outputs.artifact-bin }}
+      artifact-msi:
+        description: The name of the msi artifact.
+        value: ${{ jobs.build.outputs.artifact-msi }}
+
+env:
+  SOLUTION: src\CcgVault.sln
+  RELEASE: src\CcgVault\bin\Release
+
+jobs:
+  build:
+    name: build v${{ inputs.version }}
+    permissions:
+      contents: read
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: cmd
+    outputs:
+      artifact-bin: bin
+      artifact-msi: msi
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        with:
+          msbuild-architecture: x64
+
+      - name: Restore Packages
+        run: nuget restore ${{ env.SOLUTION }}
+
+      - name: Build Solution
+        run: msbuild.exe ${{ env.SOLUTION }} /m /p:platform="Any CPU" /p:configuration="Release"
+
+      - name: Build MSI
+        run: msi\build.cmd ${{ inputs.version }}
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: bin
+          path: ${{ env.RELEASE }}
+
+      - name: Upload MSI artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          retention-days: 1
+          name: msi
+          path: msi/out/*.msi

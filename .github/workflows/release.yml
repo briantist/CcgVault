@@ -1,0 +1,54 @@
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to release. Do not include "v".
+        type: string
+        required: true
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/_build.yml
+    with:
+      version: ${{ inputs.version }}
+
+  test:
+    permissions:
+      contents: read
+    needs: [build]
+    uses: ./.github/workflows/_test.yml
+    with:
+      artifact-bin: ${{ needs.build.outputs.artifact-bin }}
+      artifact-msi: ${{ needs.build.outputs.artifact-msi }}
+
+  release:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Retrieve artifacts
+        id: artifact
+        uses: actions/download-artifact@v3
+        with:
+          path: .artifact
+
+      - name: Zip up bin files
+        working-directory: ${{ steps.artifact.outputs.download-path }}/${{ needs.build.outputs.artifact-bin }}
+        shell: bash
+        run: zip ccgvault_v${{ inputs.version }}_x64.zip .
+
+      - name: Release
+        # https://github.com/softprops/action-gh-release/commit/fe9a9bd3295828558c7a3c004f23f3bf77d155b2
+        uses: softprops/action-gh-release@fe9a9bd3295828558c7a3c004f23f3bf77d155b2
+        with:
+          tag_name: v${{ inputs.version }}
+          fail_on_unmatched_files: true
+          discussion_category_name: Announcements
+          generate_release_notes: true
+          files: |
+            ${{ steps.artifact.outputs.download-path }}/${{ needs.build.outputs.artifact-bin }}/ccgvault_v${{ inputs.version }}_x64.zip
+            ${{ steps.artifact.outputs.download-path }}/${{ needs.build.outputs.artifact-msi }}/ccgvault_v${{ inputs.version }}_x64.msi

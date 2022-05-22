@@ -1,66 +1,26 @@
----
-name: Build & Test
+name: Test
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-env:
-  SOLUTION: src\CcgVault.sln
-  RELEASE: src\CcgVault\bin\Release
-  CCG_BUILD_VER: 0.0.99
-  BUILDVER1: 0.0.99
-  BUILDVER2: 0.0.100
+  workflow_call:
+    inputs:
+      old-version:
+        description: The semver of the previous release. Defaults to latest.
+        required: false
+        type: string
+      artifact-bin:
+        description: The name of the bin artifact.
+        required: true
+        type: string
+      artifact-msi:
+        description: The name of the msi artifact.
+        required: true
+        type: string
 
 jobs:
-  build:
-    name: build
-    runs-on: windows-2019
-    defaults:
-      run:
-        shell: cmd
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
-        with:
-          msbuild-architecture: x64
-
-      - name: Restore Packages
-        run: nuget restore ${{ env.SOLUTION }}
-
-      - name: Build Solution
-        run: msbuild.exe ${{ env.SOLUTION }} /m /p:platform="Any CPU" /p:configuration="Release"
-
-      - name: Build MSI 1
-        run: msi\build.cmd %BUILDVER1%
-
-      - name: Build MSI 2
-        run: msi\build.cmd %BUILDVER2% *.wix*
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v3
-        with:
-          if-no-files-found: error
-          retention-days: 1
-          name: bin
-          path: ${{ env.RELEASE }}
-
-      - name: Upload MSI artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          if-no-files-found: error
-          retention-days: 1
-          name: msi
-          path: msi/out/*.msi
-
   test:
     name: test - ${{ matrix.mode }} [${{ matrix.os }}]
+    permissions:
+      contents: read
     runs-on: ${{ matrix.os }}
-    needs: [build]
     strategy:
       fail-fast: false
       matrix:
@@ -101,6 +61,18 @@ jobs:
         with:
           path: .artifact
 
+      - name: Retrieve previous version
+        # https://github.com/robinraju/release-downloader/commit/63cb1cf1deff2fa0cd4083e1a72718e272cdda4e
+        uses: robinraju/release-downloader@63cb1cf1deff2fa0cd4083e1a72718e272cdda4e
+        with:
+          fileName: '*'
+          repository: ${{ github.repository }}
+          out-file-path: ${{ steps.artifact.outputs.download-path }}\${{ inputs.artifact-msi }}
+          latest: ${{ inputs.old-version == '' }}
+          tag: ${{ inputs.old-version }}
+          tarBall: false
+          zipBall: false
+
       - name: Install PowerShell modules
         uses: potatoqualitee/psmodulecache@v4.5
         with:
@@ -109,7 +81,7 @@ jobs:
 
       - name: Download Vault
         run: |
-          $outpath = Join-Path -Path '.vault' -ChildPath 'bin'
+          $outpath = Join-Path -Path '.vault' -ChildPath '${{ inputs.artifact-bin }}'
           $null = New-Item -Path $outpath -ItemType Directory -Force
 
           $w = Invoke-WebRequest -Uri https://www.vaultproject.io/downloads
@@ -142,40 +114,55 @@ jobs:
       - name: Set MSI names
         if: startsWith(matrix.mode, 'msi')
         run: |
-          $fName = 'ccgvault_v{0}_x64.msi'
+          $pattern = 'ccgvault_v(?<ver>\d+\.\d+\.\d+)_x64.msi'
+          $msiPath = Join-Path -Path '${{ steps.artifact.outputs.download-path }}' -ChildPath '${{ inputs.artifact-msi }}'
 
-          for ($i = 1 ; $i -le 2 ; ++$i) {
-              $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
-              $name = $fName -f $v
-              $path = '${{ steps.artifact.outputs.download-path }}' |
-                  Join-Path -ChildPath 'msi' |
-                  Join-Path -ChildPath $name
+          Get-ChildItem -LiteralPath $msiPath -File | ForEach-Object -Process {
+              if ($_.Name -notmatch $pattern) {
+                  return
+              }
+              $_ | Add-Member -NotePropertyName Version -NotePropertyValue ($Matches['ver'] -as [version]) -Force -PassThru
+          } | Sort-Object -Property Version -Descending | Select-Object -First 2 -OutVariable installers
 
-              echo "MSI${i}=$name" >> $env:GITHUB_ENV
-              echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
-          }
+          $new, $old = $installers
+
+          echo "MSIOLD=$($old.Name)" >> $env:GITHUB_ENV
+          echo "MSIPATHOLD=$($old.FullName)" >> $env:GITHUB_ENV
+          echo "MSIVERSIONOLD=$($old.Version)" >> $env:GITHUB_ENV
+
+          echo "MSI=$($new.Name)" >> $env:GITHUB_ENV
+          echo "MSIPATH=$($new.FullName)" >> $env:GITHUB_ENV
+          echo "MSIVERSION=$($new.Version)" >> $env:GITHUB_ENV
+          echo "CCG_BUILD_VER=$($new.Version)" >> $env:GITHUB_ENV
 
       - name: Test absent (pre-run)
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Tag Absent -Output Detailed
 
-      - name: Install from MSI
+      - name: Install from MSI [${{ endsWith(matrix.mode, 'upgrade') && env.MSIVERSIONOLD || env.MSIVERSION }}]
         if: startsWith(matrix.mode, 'msi')
         run: |
-          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          $p = if ([bool]::Parse('${{ endsWith(matrix.mode, 'upgrade') }}')) {
+              $env:MSIPATHOLD
+          }
+          else {
+              $env:MSIPATH
+          }
+          & .\Install-MsiLogged.ps1 -LiteralPath $p -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present (install)
         if: startsWith(matrix.mode, 'msi')
+        env:
+          CCG_BUILD_VER: ${{ endsWith(matrix.mode, 'upgrade') && env.MSIVERSIONOLD || env.MSIVERSION }}
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Tag Present -Output Detailed
 
-
       - name: Upgrade self (install same version)
         if: endsWith(matrix.mode, 'upgrade-self')
         run: |
-          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present (self-upgrade)
         if: endsWith(matrix.mode, 'upgrade-self')
@@ -183,15 +170,13 @@ jobs:
           . .\Initialize-Pester.ps1
           Invoke-Pester -Tag Present -Output Detailed
 
-      - name: Upgrade
+      - name: Upgrade to ${{ env.MSIVERSION }}
         if: endsWith(matrix.mode, 'upgrade')
         run: |
-          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH2 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present (upgraded)
         if: endsWith(matrix.mode, 'upgrade')
-        env:
-          CCG_BUILD_VER: ${{ env.BUILDVER2 }}
         run: |
           . .\Initialize-Pester.ps1
           Invoke-Pester -Tag Present -Output Detailed
@@ -199,7 +184,7 @@ jobs:
       - name: Uninstall
         if: endsWith(matrix.mode, 'reinstall')
         run: |
-          & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test absent (uninstall)
         if: endsWith(matrix.mode, 'reinstall')
@@ -210,7 +195,7 @@ jobs:
       - name: Reinstall
         if: endsWith(matrix.mode, 'reinstall')
         run: |
-          & .\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH1 -LogFile '${{ runner.temp }}\output.log'
+          & .\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
 
       - name: Test present
         if: endsWith(matrix.mode, 'reinstall')
@@ -225,7 +210,7 @@ jobs:
           }
           else {
               '${{ steps.artifact.outputs.download-path }}' |
-                  Join-Path -ChildPath 'bin'
+                  Join-Path -ChildPath '${{ inputs.artifact-bin }}'
           }
           echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
 

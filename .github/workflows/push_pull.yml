@@ -1,0 +1,25 @@
+---
+name: Build & Test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/_build.yml
+    with:
+      version: 98.76.54
+
+  test:
+    permissions:
+      contents: read
+    needs: [build]
+    uses: ./.github/workflows/_test.yml
+    with:
+      artifact-bin: ${{ needs.build.outputs.artifact-bin }}
+      artifact-msi: ${{ needs.build.outputs.artifact-msi }}
