@@ -27,9 +27,9 @@ jobs:
   release:
     needs: [build, test]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
+    # permissions:
+    #   contents: write
+    #   issues: write
     steps:
       - name: Retrieve artifacts
         id: artifact
