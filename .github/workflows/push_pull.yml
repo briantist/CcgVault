@@ -15,7 +15,6 @@ jobs:
       version: 98.76.54
 
   test:
-    name: test ${{ needs.build.outputs.version }}
     needs: [build]
     uses: ./.github/workflows/_test.yml
     with:

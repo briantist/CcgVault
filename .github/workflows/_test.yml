@@ -75,7 +75,7 @@ jobs:
           fileName: '*'
           repository: ${{ github.repository }}
           out-file-path: ${{ steps.artifact.outputs.download-path }}\${{ inputs.artifact-msi }}
-          latest: ${{ inputs.old-version != '' }}
+          latest: ${{ inputs.old-version == '' }}
           tag: ${{ inputs.old-version }}
           tarBall: false
           zipBall: false
