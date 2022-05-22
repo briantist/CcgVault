@@ -25,6 +25,8 @@ env:
 jobs:
   build:
     name: build v${{ inputs.version }}
+    permissions:
+      contents: read
     runs-on: windows-2019
     defaults:
       run:
