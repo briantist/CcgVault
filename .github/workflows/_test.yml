@@ -14,16 +14,6 @@ on:
         description: The name of the msi artifact.
         required: true
         type: string
-    # outputs:
-    #   version:
-    #     description: The version that was built (same as the input).
-    #     value: ${{ inputs.version }}
-      # artifact-bin:
-      #   description: The name of the bin artifact.
-      #   value: ${{ jobs.build.outputs.artifact-bin }}
-      # artifact-msi:
-      #   description: The name of the msi artifact.
-      #   value: ${{ jobs.build.outputs.artifact-msi }}
 
 jobs:
   test:
