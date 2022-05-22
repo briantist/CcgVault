@@ -63,7 +63,7 @@ jobs:
         with:
           fileName: '*'
           repository: ${{ github.repository }}
-          out-file-path: ${{ steps.artifact.outputs.download-path }}\msi
+          out-file-path: ${{ steps.artifact.outputs.download-path }}\${{ needs.build.outputs.artifact-msi }}
           latest: true
           tarBall: false
           zipBall: false
@@ -76,7 +76,7 @@ jobs:
 
       - name: Download Vault
         run: |
-          $outpath = Join-Path -Path '.vault' -ChildPath 'bin'
+          $outpath = Join-Path -Path '.vault' -ChildPath '${{ needs.build.outputs.artifact-bin }}'
           $null = New-Item -Path $outpath -ItemType Directory -Force
 
           $w = Invoke-WebRequest -Uri https://www.vaultproject.io/downloads
@@ -110,7 +110,7 @@ jobs:
         if: startsWith(matrix.mode, 'msi')
         run: |
           $pattern = 'ccgvault_v(?<ver>\d+\.\d+\.\d+)_x64.msi'
-          $msiPath = Join-Path -Path '${{ steps.artifact.outputs.download-path }}' -ChildPath 'msi'
+          $msiPath = Join-Path -Path '${{ steps.artifact.outputs.download-path }}' -ChildPath '${{ needs.build.outputs.artifact-msi }}'
 
           Get-ChildItem -LiteralPath $msiPath -File | ForEach-Object -Process {
               if ($_.Name -notmatch $pattern) {
@@ -205,7 +205,7 @@ jobs:
           }
           else {
               '${{ steps.artifact.outputs.download-path }}' |
-                  Join-Path -ChildPath 'bin'
+                  Join-Path -ChildPath '${{ needs.build.outputs.artifact-bin }}'
           }
           echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
 
