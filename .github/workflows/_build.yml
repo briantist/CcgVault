@@ -1,5 +1,5 @@
 ---
-name: Build & Test
+name: Build
 on:
   workflow_call:
     inputs:
@@ -27,7 +27,7 @@ env:
 
 jobs:
   build:
-    name: build
+    name: build ${{ inputs.version }}
     runs-on: windows-2019
     defaults:
       run:

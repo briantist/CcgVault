@@ -1,0 +1,283 @@
+name: Test
+on:
+  workflow_call:
+    inputs:
+      old-version:
+        description: The semver of the previous release. Defaults to latest.
+        required: false
+        type: string
+      artifact-bin:
+        description: The name of the bin artifact.
+        required: true
+        type: string
+      artifact-msi:
+        description: The name of the msi artifact.
+        required: true
+        type: string
+    # outputs:
+    #   version:
+    #     description: The version that was built (same as the input).
+    #     value: ${{ inputs.version }}
+      # artifact-bin:
+      #   description: The name of the bin artifact.
+      #   value: ${{ jobs.build.outputs.artifact-bin }}
+      # artifact-msi:
+      #   description: The name of the msi artifact.
+      #   value: ${{ jobs.build.outputs.artifact-msi }}
+
+jobs:
+  test:
+    name: test - ${{ matrix.mode }} [${{ matrix.os }}]
+    runs-on: ${{ matrix.os }}
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2019
+          - windows-2022
+        mode:
+          - bin
+          - msi-fresh
+          - msi-upgrade-self
+          - msi-upgrade
+          - msi-reinstall
+    env:
+      INTEGRATION: .\test\integration
+      VAULT_ADDR: http://127.0.0.1:8200
+      VAULT_DEV_ROOT_TOKEN_ID: 323e3e66-e5fe-42ba-a4b9-fad293077754
+      CcgVaultTestContainer: mcr.microsoft.com/windows/nanoserver:${{ endsWith(matrix.os, '2019') && '1809' || 'ltsc2022' }}
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: ${{ env.INTEGRATION }}
+    steps:
+      - uses: actions/checkout@v3
+
+      # https://github.com/beatcracker/Powershell-Misc
+      # We want to use:
+      # - https://github.com/beatcracker/Powershell-Misc/blob/d0704cea3d1eb948f9720dc8826a630e86150c08/Write-Host.ps1
+      - name: PowerShell-Misc
+        uses: actions/checkout@v3
+        with:
+          repository: beatcracker/Powershell-Misc
+          ref: d0704cea3d1eb948f9720dc8826a630e86150c08
+          path: .powershell
+
+      - name: Retrieve artifacts
+        id: artifact
+        uses: actions/download-artifact@v3
+        with:
+          path: .artifact
+
+      - name: Retrieve previous version
+        uses: robinraju/release-downloader@v1.3
+        with:
+          fileName: '*'
+          repository: ${{ github.repository }}
+          out-file-path: ${{ steps.artifact.outputs.download-path }}\${{ inputs.artifact-msi }}
+          latest: ${{ inputs.old-version != '' }}
+          tag: ${{ inputs.old-version }}
+          tarBall: false
+          zipBall: false
+
+      - name: Install PowerShell modules
+        uses: potatoqualitee/psmodulecache@v4.5
+        with:
+          modules-to-cache: MSI:3.3.4
+          shell: pwsh
+
+      - name: Download Vault
+        run: |
+          $outpath = Join-Path -Path '.vault' -ChildPath '${{ inputs.artifact-bin }}'
+          $null = New-Item -Path $outpath -ItemType Directory -Force
+
+          $w = Invoke-WebRequest -Uri https://www.vaultproject.io/downloads
+          $dl = $w.Links.href.Where({$_-match'\d+\.\d+\.\d+_windows_amd64.zip$'})[0] -as [uri]
+          $file = $dl.Segments[-1]
+          $outfile = Join-Path -Path $outpath -ChildPath $file
+
+          Invoke-WebRequest -Uri $dl -OutFile $outfile
+          Expand-Archive -LiteralPath $outfile -DestinationPath $outpath
+
+          $vault = Join-Path -Path $outpath -ChildPath 'vault.exe' -Resolve
+
+          & $vault version
+
+          echo "VAULT=$vault" >> $env:GITHUB_ENV
+
+      - name: Setup Vault
+        run: |
+          .vault\setup.ps1 -VaultPath $env:VAULT
+
+      - name: Setup Configs
+        run: |
+          New-Item -Path C:\ccg -ItemType Directory -Force
+          Copy-Item -LiteralPath .config/ccgvault.yml -Destination C:\ccg
+          $env:VAULT_DEV_ROOT_TOKEN_ID | Set-Content -LiteralPath C:\ccg\tokenfile -NoNewline -Encoding utf8NoBOM
+
+          # we might need this later but for now this is done within the Pester tests
+          # Copy-Item -LiteralPath .config/credspec.json -Destination "$env:ProgramData\Docker\credentialspecs" -Force
+
+      - name: Set MSI names
+        if: startsWith(matrix.mode, 'msi')
+        run: |
+          $pattern = 'ccgvault_v(?<ver>\d+\.\d+\.\d+)_x64.msi'
+          $msiPath = Join-Path -Path '${{ steps.artifact.outputs.download-path }}' -ChildPath '${{ inputs.artifact-msi }}'
+
+          Get-ChildItem -LiteralPath $msiPath -File | ForEach-Object -Process {
+              if ($_.Name -notmatch $pattern) {
+                  return
+              }
+              $_ | Add-Member -NotePropertyName Version -NotePropertyValue ($Matches['ver'] -as [version]) -Force -PassThru
+          } | Sort-Object -Property Version -Descending | Select-Object -First 2 -OutVariable installers
+
+          $new, $old = $installers
+
+          echo "MSIOLD=$($old.Name)" >> $env:GITHUB_ENV
+          echo "MSIPATHOLD=$($old.FullName)" >> $env:GITHUB_ENV
+          echo "MSIVERSIONOLD=$($old.Version)" >> $env:GITHUB_ENV
+
+          echo "MSI=$($new.Name)" >> $env:GITHUB_ENV
+          echo "MSIPATH=$($new.FullName)" >> $env:GITHUB_ENV
+          echo "MSIVERSION=$($new.Version)" >> $env:GITHUB_ENV
+          echo "CCG_BUILD_VER=$($new.Version)" >> $env:GITHUB_ENV
+
+      - name: Test absent (pre-run)
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Absent -Output Detailed
+
+      - name: Install from MSI [${{ endsWith(matrix.mode, 'upgrade') && env.MSIVERSIONOLD || env.MSIVERSION }}]
+        if: startsWith(matrix.mode, 'msi')
+        run: |
+          $p = if ([bool]::Parse('${{ endsWith(matrix.mode, 'upgrade') }}')) {
+              $env:MSIPATHOLD
+          }
+          else {
+              $env:MSIPATH
+          }
+          & .\Install-MsiLogged.ps1 -LiteralPath $p -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present (install)
+        if: startsWith(matrix.mode, 'msi')
+        env:
+          CCG_BUILD_VER: ${{ endsWith(matrix.mode, 'upgrade') && env.MSIVERSIONOLD || env.MSIVERSION }}
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Present -Output Detailed
+
+      - name: Upgrade self (install same version)
+        if: endsWith(matrix.mode, 'upgrade-self')
+        run: |
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present (self-upgrade)
+        if: endsWith(matrix.mode, 'upgrade-self')
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Present -Output Detailed
+
+      - name: Upgrade to ${{ env.MSIVERSION }}
+        if: endsWith(matrix.mode, 'upgrade')
+        run: |
+          & .\Install-MsiLogged.ps1 -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present (upgraded)
+        if: endsWith(matrix.mode, 'upgrade')
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Present -Output Detailed
+
+      - name: Uninstall
+        if: endsWith(matrix.mode, 'reinstall')
+        run: |
+          & .\Install-MsiLogged.ps1 -Mode X -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test absent (uninstall)
+        if: endsWith(matrix.mode, 'reinstall')
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Absent -Output Detailed
+
+      - name: Reinstall
+        if: endsWith(matrix.mode, 'reinstall')
+        run: |
+          & .\Install-MsiLogged.ps1 -Mode I -LiteralPath $env:MSIPATH -LogFile '${{ runner.temp }}\output.log'
+
+      - name: Test present
+        if: endsWith(matrix.mode, 'reinstall')
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag Present -Output Detailed
+
+      - name: Set bin location
+        run: |
+          $path = if ('${{ matrix.mode }}'.StartsWith('msi')) {
+              $env:ProgramFiles | Join-Path -ChildPath 'CcgVault'
+          }
+          else {
+              '${{ steps.artifact.outputs.download-path }}' |
+                  Join-Path -ChildPath '${{ inputs.artifact-bin }}'
+          }
+          echo "CcgVaultBin=${path}" >> $env:GITHUB_ENV
+
+      - name: Run simple help
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe --help
+
+      - name: Set registry entry
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe registry --permission --comclass
+
+      - name: Test registry present
+        if: matrix.mode == 'bin'
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag Registry -Output Detailed
+
+      - name: Create COM+ app
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe ping
+
+      - name: Test COM+ present
+        if: matrix.mode == 'bin'
+        env:
+          COMPLUS_IDENTITY: Interactive User
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag ComPlus -Output Detailed
+
+      - name: Create NT Service for COM+ app
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe service --install
+
+      - name: Test NT Service present and COM+ Identity
+        if: matrix.mode == 'bin'
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Absent -Tag NtService,ComPlus -Output Detailed
+
+      - name: Remove NT Service
+        if: matrix.mode == 'bin'
+        shell: cmd
+        working-directory: ${{ env.CcgVaultBin }}
+        run: CcgVault.exe service --uninstall
+
+      - name: Test NT Service absent
+        if: matrix.mode == 'bin'
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -ExcludeTagFilter Present -Tag NtService -Output Detailed
+
+      - name: Test CcgVault end-to-end
+        run: |
+          . .\Initialize-Pester.ps1
+          Invoke-Pester -Tag CcgVault -Output Detailed
