@@ -6,6 +6,11 @@ on:
         description: The version to release. Do not include "v".
         type: string
         required: true
+      draft:
+        type: boolean
+        default: true
+        description: ''
+        required: false
 
 jobs:
   build:
@@ -39,7 +44,7 @@ jobs:
       - name: Zip up bin files
         working-directory: ${{ steps.artifact.outputs.download-path }}/${{ needs.build.outputs.artifact-bin }}
         shell: bash
-        run: zip ccgvault_v${{ github.event.inputs.version }}_x64.zip .
+        run: zip -r ccgvault_v${{ github.event.inputs.version }}_x64.zip .
 
       - name: Release
         # https://github.com/softprops/action-gh-release/commit/fe9a9bd3295828558c7a3c004f23f3bf77d155b2
@@ -49,6 +54,7 @@ jobs:
           fail_on_unmatched_files: true
           discussion_category_name: Announcements
           generate_release_notes: true
+          draft: ${{ github.event.inputs.draft }}
           files: |
             ${{ steps.artifact.outputs.download-path }}/${{ needs.build.outputs.artifact-bin }}/ccgvault_v${{ github.event.inputs.version }}_x64.zip
             ${{ steps.artifact.outputs.download-path }}/${{ needs.build.outputs.artifact-msi }}/ccgvault_v${{ github.event.inputs.version }}_x64.msi
