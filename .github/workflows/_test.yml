@@ -62,11 +62,10 @@ jobs:
           path: .artifact
 
       - name: Retrieve previous version
-        # https://github.com/robinraju/release-downloader/commit/63cb1cf1deff2fa0cd4083e1a72718e272cdda4e
-        uses: robinraju/release-downloader@63cb1cf1deff2fa0cd4083e1a72718e272cdda4e
+        # https://github.com/robinraju/release-downloader/commit/9e428d5f9cb91158154260acc5fd43fd2feddae7
+        uses: robinraju/release-downloader@9e428d5f9cb91158154260acc5fd43fd2feddae7
         with:
           fileName: '*'
-          repository: ${{ github.repository }}
           out-file-path: ${{ steps.artifact.outputs.download-path }}\${{ inputs.artifact-msi }}
           latest: ${{ inputs.old-version == '' }}
           tag: ${{ inputs.old-version }}
