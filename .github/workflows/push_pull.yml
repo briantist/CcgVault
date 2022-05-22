@@ -7,13 +7,6 @@ on:
   pull_request:
     branches: [main]
 
-# env:
-#   SOLUTION: src\CcgVault.sln
-#   RELEASE: src\CcgVault\bin\Release
-#   CCG_BUILD_VER: 0.0.99
-#   BUILDVER1: 0.0.99
-#   BUILDVER2: 0.0.100
-
 jobs:
   build:
     name: build
@@ -126,8 +119,6 @@ jobs:
               $_ | Add-Member -NotePropertyName Version -NotePropertyValue ($Matches['ver'] -as [version]) -Force -PassThru
           } | Sort-Object -Property Version -Descending | Select-Object -First 2 -OutVariable installers
 
-          # $fName = 'ccgvault_v{0}_x64.msi'
-
           $new, $old = $installers
 
           echo "MSIOLD=$($old.Name)" >> $env:GITHUB_ENV
@@ -138,17 +129,6 @@ jobs:
           echo "MSIPATH=$($new.FullName)" >> $env:GITHUB_ENV
           echo "MSIVERSION=$($new.Version)" >> $env:GITHUB_ENV
           echo "CCG_BUILD_VER=$($new.Version)" >> $env:GITHUB_ENV
-
-          # for ($i = 1 ; $i -le 2 ; ++$i) {
-          #     # $v = [System.Environment]::GetEnvironmentVariable("BUILDVER${i}")
-          #     # $name = $fName -f $v
-          #     $name = $installers[$i-1].Name
-          #     $path = $installers[$i-1].FullName
-          #     # $path = Join-Path -Path $msiPath -ChildPath $name
-
-          #     echo "MSI${i}=$name" >> $env:GITHUB_ENV
-          #     echo "MSIPATH${i}=$path" >> $env:GITHUB_ENV
-          # }
 
       - name: Test absent (pre-run)
         run: |
