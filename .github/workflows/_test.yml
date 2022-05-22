@@ -29,7 +29,6 @@ jobs:
   test:
     name: test - ${{ matrix.mode }} [${{ matrix.os }}]
     runs-on: ${{ matrix.os }}
-    needs: [build]
     strategy:
       fail-fast: false
       matrix:
