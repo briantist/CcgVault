@@ -32,9 +32,9 @@ jobs:
   release:
     needs: [build, test]
     runs-on: ubuntu-latest
-    # permissions:
-    #   contents: write
-    #   issues: write
+    permissions:
+      contents: write
+      discussions: write
     steps:
       - name: Retrieve artifacts
         id: artifact
