@@ -62,7 +62,8 @@ jobs:
           path: .artifact
 
       - name: Retrieve previous version
-        uses: robinraju/release-downloader@v1.3
+        # https://github.com/robinraju/release-downloader/commit/63cb1cf1deff2fa0cd4083e1a72718e272cdda4e
+        uses: robinraju/release-downloader@63cb1cf1deff2fa0cd4083e1a72718e272cdda4e
         with:
           fileName: '*'
           repository: ${{ github.repository }}
